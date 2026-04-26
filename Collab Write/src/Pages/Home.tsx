@@ -79,6 +79,7 @@ const Home = () => {
     useEffect(() => {
         if (username && id) {
             socket.emit("join-room", id, username);
+            setCurrentRoom(id);
         }
     }, [username, id]);
 
@@ -107,13 +108,14 @@ const Home = () => {
     }
 
     const handleSendMessage = (msg: string) => {
-        if (!currentRoom || !msg.trim()) return;
-        socket.emit("chat-message", currentRoom, username, msg);
+        const room = currentRoom || id;
+        if (!room || !msg.trim()) return;
+        socket.emit("chat-message", room, username, msg);
         setLogs((prev) => [...prev, { type: 'message', user: username, text: msg }]);
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-white">
+        <div className="min-h-screen flex flex-col bg-[var(--surface)] text-[var(--on-surface)]">
             <Navbar 
                 username={username} 
                 socketId={socketId} 
@@ -123,23 +125,23 @@ const Home = () => {
                 docTitle={docTitle}
                 setDocTitle={setDocTitle}
             />
-            <main className="flex-1 flex bg-[#f7f7f7] overflow-hidden relative">
+            <main className="flex-1 flex bg-[var(--surface)] overflow-hidden relative bg-gradient-to-br from-[#131313] to-[#1a1a2e]/20">
                 {/* Editor Container */}
-                <div className="flex-1 flex justify-center p-4 sm:p-6 overflow-y-auto relative">
-                    <div className="w-full max-w-5xl bg-white border border-[#e5e5e5] rounded-md flex flex-col shadow-sm min-h-full relative">
+                <div className="flex-1 flex justify-center p-4 sm:p-8 overflow-y-auto relative">
+                    <div className="w-full max-w-5xl bg-[var(--surface-container-low)]/80 backdrop-blur-md border border-[var(--outline-variant)] rounded-2xl flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-h-full relative overflow-hidden">
                         <Edit delta={delta} setDelta={setDelta} socket={socket} quillRef={quillRef} currentRoom={currentRoom} />
                     </div>
                 </div>
 
                 {/* Sidebar Container */}
-                <div className="w-80 bg-white border-l border-[#e5e5e5] flex flex-col shadow-sm z-10 hidden md:flex shrink-0">
+                <div className="w-80 flex flex-col z-10 hidden md:flex shrink-0">
                     <LogsSidebar logs={logs} currentRoom={currentRoom} onSendMessage={handleSendMessage} />
                 </div>
             </main>
 
-            <button onClick={() => {
+            <button className="fixed bottom-4 left-4 bg-[var(--surface-container-high)] border border-[var(--outline-variant)] px-2 py-1 text-xs font-mono rounded-md text-[var(--on-surface-variant)] opacity-20 hover:opacity-100 transition-opacity z-50" onClick={() => {
                 console.log(quillRef.current?.getEditor().getContents());
-            }}>Get Delta</button>
+            }}>Debug: Get Delta</button>
         </div>
     );
 };

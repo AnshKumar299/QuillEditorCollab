@@ -29,26 +29,26 @@ const LogsSidebar: React.FC<LogsSidebarProps> = ({ logs, currentRoom, onSendMess
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#fafafa]">
-            <div className="px-4 py-3 border-b border-[#e5e5e5] bg-white shrink-0 shadow-sm z-10">
-                <h3 className="text-sm font-semibold text-[#111]">Activity Logs</h3>
+        <div className="flex flex-col h-full bg-[var(--surface-container-low)] text-[var(--on-surface)] border-l border-[var(--outline-variant)]">
+            <div className="px-4 py-3 border-b border-[var(--outline-variant)] bg-[var(--surface-container-low)]/80 backdrop-blur-md shrink-0 shadow-sm z-10">
+                <h3 className="text-sm font-bold text-[var(--primary)] tracking-tight">Activity Logs</h3>
             </div>
             
             <div className="flex-1 flex flex-col p-4 overflow-hidden relative">
                 <div className="flex flex-col gap-2 overflow-y-auto no-scrollbar h-full">
                     {!currentRoom ? (
-                        <div className="text-[#999] text-xs text-center my-auto">No room joined</div>
+                        <div className="text-[var(--outline)] font-mono text-xs text-center my-auto">No room joined</div>
                     ) : logs.length === 0 ? (
-                        <div className="text-[#999] text-xs text-center my-auto">No activity yet</div>
+                        <div className="text-[var(--outline)] font-mono text-xs text-center my-auto">No activity yet</div>
                     ) : (
                         logs.map((log, index) => (
                             <div key={index} className="w-full text-[13px] break-words animate-in fade-in slide-in-from-bottom-2">
                                 {log.type === 'log' ? (
-                                    <div className="text-[#666] text-center text-xs my-2 italic">{log.text}</div>
+                                    <div className="text-[var(--on-surface-variant)] text-center font-mono text-xs my-2 italic">{log.text}</div>
                                 ) : (
-                                    <div className="text-[#111] mb-1">
-                                        <span className="font-semibold text-[#000080]">{log.user}</span>
-                                        <span className="mx-1">:</span>
+                                    <div className="text-[var(--on-surface)] mb-1">
+                                        <span className="font-bold text-[var(--primary)]">{log.user}</span>
+                                        <span className="mx-1 text-[var(--outline-variant)]">:</span>
                                         <span>{log.text}</span>
                                     </div>
                                 )}
@@ -60,8 +60,8 @@ const LogsSidebar: React.FC<LogsSidebarProps> = ({ logs, currentRoom, onSendMess
             </div>
 
             {/* Message Input Section */}
-            <div className="p-3 bg-white border-t border-[#e5e5e5]">
-                <div className={`flex items-center bg-[#f5f5f5] rounded-full px-3 py-1.5 border border-[#e5e5e5] transition-colors ${currentRoom ? 'focus-within:border-[#ccc]' : 'opacity-50'}`}>
+            <div className="p-3 bg-[var(--surface-container-low)] border-t border-[var(--outline-variant)]">
+                <div className={`flex items-center bg-[#0a0a0a] rounded-full px-3 py-1.5 border border-[var(--outline-variant)] transition-colors ${currentRoom ? 'focus-within:border-[var(--secondary-container)] focus-within:ring-1 focus-within:ring-[var(--secondary-container)]' : 'opacity-50'}`}>
                     <input 
                         type="text" 
                         value={inputMsg}
@@ -69,12 +69,12 @@ const LogsSidebar: React.FC<LogsSidebarProps> = ({ logs, currentRoom, onSendMess
                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                         placeholder={currentRoom ? "Type a message..." : "Join a room to chat"}
                         disabled={!currentRoom}
-                        className="flex-1 bg-transparent border-none outline-none text-sm text-[#333] px-2"
+                        className="flex-1 bg-transparent border-none outline-none font-mono text-xs text-[var(--on-surface)] placeholder-[var(--outline)] px-2"
                     />
                     <button 
                         onClick={handleSend}
                         disabled={!currentRoom}
-                        className={`p-1.5 text-[#666] transition-colors rounded-full flex-shrink-0 ${currentRoom ? 'hover:text-[#111] hover:bg-[#e5e5e5]' : ''}`}
+                        className={`p-1.5 text-[var(--on-surface-variant)] transition-colors rounded-full flex-shrink-0 ${currentRoom ? 'hover:text-[var(--secondary-container)]' : ''}`}
                     >
                         <Send size={16} />
                     </button>

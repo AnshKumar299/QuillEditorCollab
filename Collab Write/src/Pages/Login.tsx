@@ -14,118 +14,84 @@ const Login = () => {
     }
   }, [cookies.token, navigate]);
 
-  const [inputValue, setInputValue] = useState({
-    email: "",
-    password: "",
-  });
+  const [inputValue, setInputValue] = useState({ email: "", password: "" });
   const { email, password } = inputValue;
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setInputValue({
-      ...inputValue,
-      [name]: value,
-    });
+    setInputValue({ ...inputValue, [name]: value });
   };
 
-  const handleError = (err: string) =>
-    toast.error(err, {
-      position: "top-right",
-    });
-  const handleSuccess = (msg: string) =>
-    toast.success(msg, {
-      position: "top-right",
-      toastId: "loginSuccess"
-    });
+  const handleError = (err: string) => toast.error(err, { position: "top-right" });
+  const handleSuccess = (msg: string) => toast.success(msg, { position: "top-right", toastId: "loginSuccess" });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post(
-        "http://localhost:3000/login",
-        {
-          ...inputValue,
-        },
-        { withCredentials: true }
-      );
+      const { data } = await axios.post("http://localhost:3000/login", { ...inputValue }, { withCredentials: true });
       const { success, message } = data;
-      if (success) {
-        handleSuccess(message);
-        navigate("/");
-      } else {
-        handleError(message);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-    setInputValue({
-      ...inputValue,
-      email: "",
-      password: "",
-    });
+      if (success) { handleSuccess(message); navigate("/"); }
+      else { handleError(message); }
+    } catch (error) { console.log(error); }
+    setInputValue({ ...inputValue, email: "", password: "" });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans px-4 sm:px-6 lg:px-8 selection:bg-indigo-100 selection:text-indigo-900">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-sm border border-slate-200">
-        <div className="text-center">
-            <div className="mx-auto w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl shadow-sm mb-4">
-                Q
-            </div>
-          <h2 className="text-3xl font-extrabold text-slate-900">
-            Welcome back
-          </h2>
-          <p className="mt-2 text-sm text-slate-500">
-            Sign in to continue to your documents.
+    <div className="min-h-screen flex">
+      {/* Left panel - branding */}
+      <div className="hidden lg:flex lg:w-[45%] bg-[#1a1a2e] text-white flex-col justify-between p-12">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Collab Write</h1>
+        </div>
+        <div>
+          <p className="text-3xl font-semibold leading-snug max-w-md">
+            Write together,<br />in real time.
+          </p>
+          <p className="mt-4 text-[#8888a8] text-sm max-w-sm">
+            A collaborative document editor for teams. No fuss, just writing.
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1" htmlFor="email">Email address</label>
-              <input
-                type="email"
-                name="email"
-                value={email}
-                placeholder="you@example.com"
-                onChange={handleOnChange}
-                className="appearance-none relative block w-full px-4 py-3 border border-slate-300 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors"
-                autoComplete="email"
-                required
-              />
-            </div>
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                  <label className="block text-sm font-medium text-slate-700" htmlFor="password">Password</label>
-                  <a href="#" className="text-xs font-medium text-indigo-600 hover:text-indigo-500 transition-colors">Forgot password?</a>
-              </div>
-              <input
-                type="password"
-                name="password"
-                value={password}
-                placeholder="••••••••"
-                onChange={handleOnChange}
-                className="appearance-none relative block w-full px-4 py-3 border border-slate-300 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors"
-                autoComplete="current-password"
-                required
-              />
-            </div>
+        <p className="text-xs text-[#555570]">v1.0.2</p>
+      </div>
+
+      {/* Right panel - form */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-[#f7f7f7]">
+        <div className="w-full max-w-sm">
+          <div className="lg:hidden mb-8">
+            <h1 className="text-xl font-bold text-[#111]">Collab Write</h1>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-sm transition-all"
-            >
-              Sign in
+          <h2 className="text-2xl font-semibold text-[#111] mb-1">Log in</h2>
+          <p className="text-sm text-[#777] mb-8">Enter your credentials to continue.</p>
+
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label className="block text-xs font-medium text-[#555] mb-1.5" htmlFor="email">Email</label>
+              <input
+                type="email" name="email" id="email" value={email}
+                placeholder="you@example.com" onChange={handleOnChange}
+                className="w-full px-3 py-2 text-sm bg-white border border-[#ddd] rounded-md text-[#111] placeholder-[#aaa] focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors"
+                autoComplete="email" required
+              />
+            </div>
+            <div className="mb-6">
+              <label className="block text-xs font-medium text-[#555] mb-1.5" htmlFor="password">Password</label>
+              <input
+                type="password" name="password" id="password" value={password}
+                placeholder="Your password" onChange={handleOnChange}
+                className="w-full px-3 py-2 text-sm bg-white border border-[#ddd] rounded-md text-[#111] placeholder-[#aaa] focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors"
+                autoComplete="current-password" required
+              />
+            </div>
+            <button type="submit" className="w-full py-2 bg-[#111] text-white text-sm font-medium rounded-md hover:bg-[#333] transition-colors">
+              Log in
             </button>
-          </div>
-        </form>
-        <p className="mt-6 text-center text-sm text-slate-600">
-          Don't have an account?{" "}
-          <Link to="/signup" className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
-            Sign up
-          </Link>
-        </p>
+          </form>
+
+          <p className="mt-6 text-sm text-[#888]">
+            No account?{" "}
+            <Link to="/signup" className="text-[#111] font-medium hover:underline">Sign up</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

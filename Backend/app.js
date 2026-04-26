@@ -61,6 +61,39 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => {
         console.log(socket.id + " disconnected");
     });
+
+    socket.emit("message", {
+        ops: [
+            { insert: 'The Two Towers' },
+            { insert: '\n', attributes: { header: 1 } },
+            { insert: 'Aragorn sped on up the hill.\n' }
+        ]
+    }, () => {
+        console.log("message sent");
+    })
+
+    socket.on("join-room", (id) => {
+        socket.join(id);
+    })
+
+    socket.on("send-delta", (id, delta) => {
+        console.log("delta sent");
+        socket.to(id).emit("receive-delta", delta);
+    })
+
+    socket.on("rename-room", (oldId, newId) => {
+        console.log(`room renamed from ${oldId} to ${newId}`);
+        // Notify others in the old room
+        socket.to(oldId).emit("room-renamed", newId);
+        // The sender also changes rooms
+        socket.leave(oldId);
+        socket.join(newId);
+    });
+
+    socket.on("leave-room", (id) => {
+        console.log(`socket ${socket.id} left room ${id}`);
+        socket.leave(id);
+    });
 });
 
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useCookies } from "react-cookie";
 import { toast } from "react-toastify";
 import { Pencil, Check } from "lucide-react";
@@ -10,9 +10,11 @@ interface NavbarProps {
     socket: any;
     currentRoom: string;
     setCurrentRoom: (room: string) => void;
+    docTitle?: string;
+    setDocTitle?: (title: string) => void;
 }
 
-const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom }: NavbarProps) => {
+const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTitle, setDocTitle }: NavbarProps) => {
     const navigate = useNavigate();
     const [cookies, setCookie, removeCookie] = useCookies(["token"]);
 
@@ -49,17 +51,35 @@ const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom }: Nav
         toast.success(`Joined room: ${editRoomInput}`);
     };
 
+    const handleTitleRename = (newTitle: string) => {
+        if (!newTitle.trim() || !setDocTitle) return;
+        setDocTitle(newTitle);
+        const docId = window.location.pathname.split('/').pop();
+        if (docId) {
+            socket.emit("rename-document", docId, newTitle);
+        }
+    };
+
     return (
         <header className="h-16 flex items-center justify-between px-6 border-b border-[#e5e5e5] bg-white shrink-0">
             <div className="flex items-center gap-4">
-                <span className="text-lg font-bold text-[#111] tracking-tight">Collab Write</span>
+                <Link to="/" className="text-lg font-bold text-[#111] tracking-tight hover:text-[#555] transition-colors">
+                    Collab Write
+                </Link>
                 <span className="text-[#ccc] text-lg font-light">/</span>
                 <input
                     type="text"
-                    defaultValue="Untitled"
+                    value={docTitle || "Untitled"}
+                    onChange={(e) => setDocTitle && setDocTitle(e.target.value)}
+                    onBlur={(e) => handleTitleRename(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            handleTitleRename((e.target as HTMLInputElement).value);
+                            e.currentTarget.blur();
+                        }
+                    }}
                     className="text-base text-[#333] bg-transparent border-none outline-none px-2 py-1 rounded hover:bg-[#f5f5f5] focus:bg-[#f5f5f5] w-32 sm:w-64 transition-colors font-medium"
                 />
-                <span className="text-xs text-[#bbb] hidden md:inline">Saved</span>
             </div>
             <div className="flex items-center gap-4">
                 {/* Room Section */}

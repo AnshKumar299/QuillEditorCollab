@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useCookies } from "react-cookie";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -12,6 +12,7 @@ const socket = io("http://localhost:3000", { autoConnect: false });
 
 const Home = () => {
     const navigate = useNavigate();
+    const { id } = useParams();
     const [cookies, setCookie, removeCookie] = useCookies(["token"]);
     const [isVerified, setIsVerified] = useState(false);
     const [username, setUsername] = useState("");
@@ -20,7 +21,8 @@ const Home = () => {
     const [currentRoom, setCurrentRoom] = useState("");
     const [socketId, setSocketId] = useState("");
     const [delta, setDelta] = useState({});
-    const quillRef = useRef(null);
+    const [docTitle, setDocTitle] = useState("Untitled");
+    const quillRef = useRef<any>(null);
     const [logs, setLogs] = useState<any[]>([]);
 
     useEffect(() => {
@@ -32,25 +34,53 @@ const Home = () => {
         socket.connect();
         if (socket.connected) setSocketId(socket.id || "");
         socket.on("connect", () => setSocketId(socket.id || ""));
-        socket.on("message", (data) => setDelta(data));
-        socket.on("user-joined", (id) => {
-            setLogs((prev) => [...prev, { type: 'log', text: `${id} joined the room` }]);
+        
+        // Initial load
+        socket.on("load-document", (data) => {
+            if (data.content) setDelta(data.content);
+            if (data.title) setDocTitle(data.title);
         });
-        socket.on("user-left", (id) => {
-            setLogs((prev) => [...prev, { type: 'log', text: `${id} left the room` }]);
+
+        // Receive changes from other users
+        socket.on("receive-delta", (deltaChange) => {
+            if (quillRef.current) {
+                quillRef.current.getEditor().updateContents(deltaChange);
+            }
+        });
+
+        socket.on("document-renamed", (user, newTitle) => {
+            setDocTitle(newTitle);
+            setLogs((prev) => [...prev, { type: 'log', text: `${user} renamed the file to "${newTitle}"` }]);
+        });
+
+        socket.on("user-joined", (userId) => {
+            setLogs((prev) => [...prev, { type: 'log', text: `${userId} joined the room` }]);
+        });
+        socket.on("user-left", (userId) => {
+            setLogs((prev) => [...prev, { type: 'log', text: `${userId} left the room` }]);
         });
         socket.on("receive-chat-message", (user, msg) => {
             setLogs((prev) => [...prev, { type: 'message', user, text: msg }]);
         });
+        
         return () => {
             socket.off("connect");
-            socket.off("message");
+            socket.off("load-document");
+            socket.off("receive-delta");
+            socket.off("document-renamed");
             socket.off("user-joined");
             socket.off("user-left");
             socket.off("receive-chat-message");
             socket.disconnect();
         };
     }, []);
+
+    // Join doc room to load data initially
+    useEffect(() => {
+        if (username && id) {
+            socket.emit("join-room", id, username);
+        }
+    }, [username, id]);
 
     useEffect(() => {
         const verifyCookie = async () => {
@@ -84,12 +114,20 @@ const Home = () => {
 
     return (
         <div className="min-h-screen flex flex-col bg-white">
-            <Navbar username={username} socketId={socketId} socket={socket} currentRoom={currentRoom} setCurrentRoom={setCurrentRoom} />
+            <Navbar 
+                username={username} 
+                socketId={socketId} 
+                socket={socket} 
+                currentRoom={currentRoom} 
+                setCurrentRoom={setCurrentRoom} 
+                docTitle={docTitle}
+                setDocTitle={setDocTitle}
+            />
             <main className="flex-1 flex bg-[#f7f7f7] overflow-hidden relative">
                 {/* Editor Container */}
                 <div className="flex-1 flex justify-center p-4 sm:p-6 overflow-y-auto relative">
                     <div className="w-full max-w-5xl bg-white border border-[#e5e5e5] rounded-md flex flex-col shadow-sm min-h-full relative">
-                        <Edit delta={delta} setDelta={setDelta} socket={socket} quillRef={quillRef} />
+                        <Edit delta={delta} setDelta={setDelta} socket={socket} quillRef={quillRef} currentRoom={currentRoom} />
                     </div>
                 </div>
 

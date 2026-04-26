@@ -7,6 +7,8 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import authRoute from "./routes/AuthRoute.js";
+import documentRoute from "./routes/DocumentRoute.js";
+import Document from "./models/Document.js";
 
 dotenv.config();
 
@@ -75,7 +77,7 @@ io.on("connection", (socket) => {
         console.log("message sent");
     })
 
-    socket.on("join-room", (id, username) => {
+    socket.on("join-room", async (id, username) => {
         if (socket.currentRoom && socket.currentRoom !== id) {
             socket.to(socket.currentRoom).emit("user-left", socket.username || socket.id);
             socket.leave(socket.currentRoom);
@@ -84,10 +86,49 @@ io.on("connection", (socket) => {
         socket.username = username;
         socket.join(id);
         io.to(id).emit("user-joined", username || socket.id);
+
+        try {
+            const document = await Document.findById(id);
+            if (document) {
+                socket.emit("load-document", { 
+                    content: document.content, 
+                    title: document.title 
+                });
+            }
+        } catch (err) {
+            console.error("Error loading document on join:", err);
+        }
     })
 
+    socket.on("save-document", async (id, content) => {
+        try {
+            await Document.findByIdAndUpdate(id, { content });
+        } catch (err) {
+            console.error("Error saving document:", err);
+        }
+    });
+
+    socket.on("rename-document", async (id, title) => {
+        try {
+            await Document.findByIdAndUpdate(id, { title });
+            
+            // Send to others in the document room
+            socket.to(id).emit("document-renamed", socket.username || socket.id, title);
+            
+            // If the user is in a custom collab room, send to others there too
+            if (socket.currentRoom && socket.currentRoom !== id) {
+                socket.to(socket.currentRoom).emit("document-renamed", socket.username || socket.id, title);
+            }
+            
+            // Explicitly send back to the user who renamed it so their log updates
+            socket.emit("document-renamed", socket.username || socket.id, title);
+            
+        } catch (err) {
+            console.error("Error renaming document:", err);
+        }
+    });
+
     socket.on("send-delta", (id, delta) => {
-        console.log("delta sent");
         socket.to(id).emit("receive-delta", delta);
     })
 
@@ -122,3 +163,4 @@ app.get("/", (req, res) => {
 });
 
 app.use("/", authRoute);
+app.use("/documents", documentRoute);

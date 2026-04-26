@@ -60,6 +60,9 @@ io.on("connection", (socket) => {
 
     socket.on("disconnect", () => {
         console.log(socket.id + " disconnected");
+        if (socket.currentRoom) {
+            socket.to(socket.currentRoom).emit("user-left", socket.username || socket.id);
+        }
     });
 
     socket.emit("message", {
@@ -72,8 +75,15 @@ io.on("connection", (socket) => {
         console.log("message sent");
     })
 
-    socket.on("join-room", (id) => {
+    socket.on("join-room", (id, username) => {
+        if (socket.currentRoom && socket.currentRoom !== id) {
+            socket.to(socket.currentRoom).emit("user-left", socket.username || socket.id);
+            socket.leave(socket.currentRoom);
+        }
+        socket.currentRoom = id;
+        socket.username = username;
         socket.join(id);
+        io.to(id).emit("user-joined", username || socket.id);
     })
 
     socket.on("send-delta", (id, delta) => {
@@ -81,18 +91,17 @@ io.on("connection", (socket) => {
         socket.to(id).emit("receive-delta", delta);
     })
 
-    socket.on("rename-room", (oldId, newId) => {
-        console.log(`room renamed from ${oldId} to ${newId}`);
-        // Notify others in the old room
-        socket.to(oldId).emit("room-renamed", newId);
-        // The sender also changes rooms
-        socket.leave(oldId);
-        socket.join(newId);
+    socket.on("chat-message", (id, username, message) => {
+        socket.to(id).emit("receive-chat-message", username, message);
     });
 
-    socket.on("leave-room", (id) => {
+
+
+    socket.on("leave-room", (id, username) => {
         console.log(`socket ${socket.id} left room ${id}`);
+        socket.to(id).emit("user-left", username || socket.id);
         socket.leave(id);
+        socket.currentRoom = null;
     });
 });
 

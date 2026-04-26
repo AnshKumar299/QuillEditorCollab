@@ -22,7 +22,7 @@ const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom }: Nav
 
     const handleJoinRoom = () => {
         if (!joinInput.trim()) return;
-        socket.emit("join-room", joinInput);
+        socket.emit("join-room", joinInput, username);
         setCurrentRoom(joinInput);
         setJoinInput("");
         toast.success(`Joined room: ${joinInput}`);
@@ -35,16 +35,18 @@ const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom }: Nav
         }
         
         if (!editRoomInput.trim()) {
-            socket.emit("leave-room", currentRoom);
+            socket.emit("leave-room", currentRoom, username);
             setCurrentRoom("");
             setIsEditingRoom(false);
             toast.info("Left the room");
             return;
         }
 
-        socket.emit("rename-room", currentRoom, editRoomInput);
+        socket.emit("leave-room", currentRoom, username);
+        socket.emit("join-room", editRoomInput, username);
         setCurrentRoom(editRoomInput);
         setIsEditingRoom(false);
+        toast.success(`Joined room: ${editRoomInput}`);
     };
 
     return (

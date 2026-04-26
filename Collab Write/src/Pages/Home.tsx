@@ -5,6 +5,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import Edit from "../Components/Edit.tsx";
 import Navbar from "../Components/Navbar.tsx";
+import LogsSidebar from "../Components/LogsSidebar.tsx";
 import { io } from "socket.io-client";
 
 const socket = io("http://localhost:3000", { autoConnect: false });
@@ -14,25 +15,39 @@ const Home = () => {
     const [cookies, setCookie, removeCookie] = useCookies(["token"]);
     const [isVerified, setIsVerified] = useState(false);
     const [username, setUsername] = useState("");
+    const usernameRef = useRef("");
+    useEffect(() => { usernameRef.current = username; }, [username]);
     const [currentRoom, setCurrentRoom] = useState("");
     const [socketId, setSocketId] = useState("");
     const [delta, setDelta] = useState({});
     const quillRef = useRef(null);
+    const [logs, setLogs] = useState<any[]>([]);
+
+    useEffect(() => {
+        setLogs([]);
+        setDelta({});
+    }, [currentRoom]);
 
     useEffect(() => {
         socket.connect();
         if (socket.connected) setSocketId(socket.id || "");
         socket.on("connect", () => setSocketId(socket.id || ""));
         socket.on("message", (data) => setDelta(data));
-        socket.on("room-renamed", (newId) => {
-            setCurrentRoom(newId);
-            socket.emit("join-room", newId);
-            toast.info(`Room renamed to ${newId}`);
+        socket.on("user-joined", (id) => {
+            setLogs((prev) => [...prev, { type: 'log', text: `${id} joined the room` }]);
+        });
+        socket.on("user-left", (id) => {
+            setLogs((prev) => [...prev, { type: 'log', text: `${id} left the room` }]);
+        });
+        socket.on("receive-chat-message", (user, msg) => {
+            setLogs((prev) => [...prev, { type: 'message', user, text: msg }]);
         });
         return () => {
             socket.off("connect");
             socket.off("message");
-            socket.off("room-renamed");
+            socket.off("user-joined");
+            socket.off("user-left");
+            socket.off("receive-chat-message");
             socket.disconnect();
         };
     }, []);
@@ -61,13 +76,26 @@ const Home = () => {
         );
     }
 
+    const handleSendMessage = (msg: string) => {
+        if (!currentRoom || !msg.trim()) return;
+        socket.emit("chat-message", currentRoom, username, msg);
+        setLogs((prev) => [...prev, { type: 'message', user: username, text: msg }]);
+    };
+
     return (
         <div className="min-h-screen flex flex-col bg-white">
             <Navbar username={username} socketId={socketId} socket={socket} currentRoom={currentRoom} setCurrentRoom={setCurrentRoom} />
-            {/* Editor — full width landscape layout */}
-            <main className="flex-1 flex justify-center bg-[#f7f7f7] p-4 sm:p-6">
-                <div className="w-full max-w-6xl bg-white border border-[#e5e5e5] rounded-md flex flex-col shadow-sm">
-                    <Edit delta={delta} setDelta={setDelta} socket={socket} quillRef={quillRef} />
+            <main className="flex-1 flex bg-[#f7f7f7] overflow-hidden relative">
+                {/* Editor Container */}
+                <div className="flex-1 flex justify-center p-4 sm:p-6 overflow-y-auto relative">
+                    <div className="w-full max-w-5xl bg-white border border-[#e5e5e5] rounded-md flex flex-col shadow-sm min-h-full relative">
+                        <Edit delta={delta} setDelta={setDelta} socket={socket} quillRef={quillRef} />
+                    </div>
+                </div>
+
+                {/* Sidebar Container */}
+                <div className="w-80 bg-white border-l border-[#e5e5e5] flex flex-col shadow-sm z-10 hidden md:flex shrink-0">
+                    <LogsSidebar logs={logs} currentRoom={currentRoom} onSendMessage={handleSendMessage} />
                 </div>
             </main>
 

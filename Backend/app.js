@@ -13,7 +13,13 @@ import Document from "./models/Document.js";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(
+    cors({
+        origin: ["*"],
+        methods: ["GET", "POST", "PUT", "DELETE"],
+        credentials: true,
+    })
+);
 app.use(cookieParser());
 app.use(express.json());
 

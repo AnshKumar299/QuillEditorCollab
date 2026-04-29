@@ -7,6 +7,7 @@ import Edit from "../Components/Edit.tsx";
 import Navbar from "../Components/Navbar.tsx";
 import LogsSidebar from "../Components/LogsSidebar.tsx";
 import { io } from "socket.io-client";
+import * as quillToWord from "quill-to-word";
 
 const socket = io("http://localhost:3000", { autoConnect: false });
 
@@ -106,6 +107,22 @@ const Home = () => {
         setLogs((prev) => [...prev, { type: 'message', user: username, text: msg }]);
     };
 
+    const handleDownload = async () => {
+        if (!quillRef.current) return;
+        const quillDelta = quillRef.current.getEditor().getContents();
+        const doc = await quillToWord.generateWord(quillDelta, { exportAs: 'blob' });
+        
+        const url = window.URL.createObjectURL(doc as Blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${docTitle || 'document'}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        toast.success("Document downloaded!");
+    };
+
     return (
         <div className="min-h-screen flex flex-col bg-[var(--surface)] text-[var(--on-surface)]">
             <Navbar
@@ -116,6 +133,7 @@ const Home = () => {
                 setCurrentRoom={setCurrentRoom}
                 docTitle={docTitle}
                 setDocTitle={setDocTitle}
+                onDownload={handleDownload}
             />
             <main className="flex-1 flex bg-[var(--surface)] overflow-hidden relative bg-gradient-to-br from-[var(--gradient-start)] to-[var(--gradient-end)]">
                 {/* Editor Container */}

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCookies } from "react-cookie";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { Sun, Moon } from "lucide-react";
 
 interface Document {
     _id: string;
@@ -16,6 +17,26 @@ const Dashboard = () => {
     const [documents, setDocuments] = useState<Document[]>([]);
     const [username, setUsername] = useState("");
     const [loading, setLoading] = useState(true);
+    const [isLightMode, setIsLightMode] = useState(() => {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'light') {
+            document.documentElement.classList.add('light');
+            return true;
+        }
+        return false;
+    });
+
+    const toggleTheme = () => {
+        if (isLightMode) {
+            document.documentElement.classList.remove('light');
+            localStorage.setItem('theme', 'dark');
+            setIsLightMode(false);
+        } else {
+            document.documentElement.classList.add('light');
+            localStorage.setItem('theme', 'light');
+            setIsLightMode(true);
+        }
+    };
 
     useEffect(() => {
         const verifyCookieAndFetchData = async () => {
@@ -65,9 +86,12 @@ const Dashboard = () => {
     return (
         <div className="min-h-screen bg-[var(--surface)] text-[var(--on-surface)] flex flex-col">
             <header className="bg-[var(--surface-container-low)]/80 backdrop-blur-md border-b border-[var(--outline-variant)] px-6 py-4 flex justify-between items-center sticky top-0 z-10">
-                <h1 className="text-xl font-bold text-[var(--primary)] tracking-tight">My Documents</h1>
+                <h1 className="text-xl font-bold text-[var(--primary)] tracking-tight">Collab Write</h1>
                 <div className="flex items-center gap-4">
-                    <span className="text-sm font-mono text-[var(--on-surface-variant)]">Hello, <span className="text-[var(--secondary-container)]">{username}</span></span>
+                    <span className="text-sm font-mono text-[var(--on-surface-variant)] hidden sm:inline">{username}</span>
+                    <button onClick={toggleTheme} className="text-[var(--outline)] hover:text-[var(--primary)] transition-colors p-1.5 rounded hover:bg-[var(--surface-container-high)]" title="Toggle Theme">
+                        {isLightMode ? <Moon size={18} /> : <Sun size={18} />}
+                    </button>
                     <button
                         onClick={() => {
                             removeCookie("token", { path: "/" });
@@ -82,6 +106,8 @@ const Dashboard = () => {
 
             <main className="p-8 lg:p-12 max-w-7xl mx-auto w-full">
                 <div className="mb-10">
+                    <h2 className="text-xl font-bold text-[var(--primary)] tracking-tight">My documents</h2>
+                    <br />
                     <button
                         onClick={createDocument}
                         className="bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] text-[var(--on-primary)] px-6 py-3 font-bold rounded-md hover:shadow-[0_0_15px_var(--primary)] transition-all"

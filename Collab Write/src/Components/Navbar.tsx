@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useCookies } from "react-cookie";
 import { toast } from "react-toastify";
-import { Pencil, Check, Sun, Moon, Info, X } from "lucide-react";
+import { Pencil, Check, Sun, Moon, Info, X, Download } from "lucide-react";
 
 interface NavbarProps {
     username: string;
@@ -12,9 +12,10 @@ interface NavbarProps {
     setCurrentRoom: (room: string) => void;
     docTitle?: string;
     setDocTitle?: (title: string) => void;
+    onDownload?: () => void;
 }
 
-const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTitle, setDocTitle }: NavbarProps) => {
+const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTitle, setDocTitle, onDownload }: NavbarProps) => {
     const navigate = useNavigate();
     const [cookies, setCookie, removeCookie] = useCookies(["token"]);
 
@@ -145,6 +146,13 @@ const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTi
                 )}
 
                 <div className="h-6 w-px bg-[var(--outline-variant)] mx-1 hidden sm:block"></div>
+
+                {/* Download Button */}
+                {onDownload && currentRoom && (
+                    <button onClick={onDownload} className="text-[var(--outline)] hover:text-[var(--primary)] transition-colors p-1.5 rounded hover:bg-[var(--surface-container-high)]" title="Download as Word">
+                        <Download size={18} />
+                    </button>
+                )}
 
                 {/* Info Button */}
                 <button onClick={() => setIsInfoOpen(true)} className="text-[var(--outline)] hover:text-[var(--primary)] transition-colors p-1.5 rounded hover:bg-[var(--surface-container-high)]" title="How to use">

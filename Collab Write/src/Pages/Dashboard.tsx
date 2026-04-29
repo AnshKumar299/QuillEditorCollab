@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCookies } from "react-cookie";
 import axios from "axios";
 import { useToast } from "../Context/ToastContext";
 import { Sun, Moon } from "lucide-react";
@@ -13,7 +12,6 @@ interface Document {
 
 const Dashboard = () => {
     const navigate = useNavigate();
-    const [cookies, , removeCookie] = useCookies(["token"]);
     const [documents, setDocuments] = useState<Document[]>([]);
     const [username, setUsername] = useState("");
     const [loading, setLoading] = useState(true);
@@ -41,7 +39,7 @@ const Dashboard = () => {
 
     useEffect(() => {
         const verifyCookieAndFetchData = async () => {
-            if (!cookies.token) {
+            if (!localStorage.getItem("isLoggedIn")) {
                 navigate("/login");
                 return;
             }
@@ -56,19 +54,19 @@ const Dashboard = () => {
                         setDocuments(docRes.data.documents);
                     }
                 } else {
-                    removeCookie("token", { path: "/" });
+                    localStorage.removeItem("isLoggedIn");
                     navigate("/login");
                 }
             } catch (err) {
                 console.error(err);
-                removeCookie("token", { path: "/" });
+                localStorage.removeItem("isLoggedIn");
                 navigate("/login");
             } finally {
                 setLoading(false);
             }
         };
         verifyCookieAndFetchData();
-    }, [cookies.token, navigate, removeCookie]);
+    }, [navigate]);
 
     const createDocument = async () => {
         try {
@@ -95,7 +93,7 @@ const Dashboard = () => {
                     </button>
                     <button
                         onClick={() => {
-                            removeCookie("token", { path: "/" });
+                            localStorage.removeItem("isLoggedIn");
                             navigate("/login");
                         }}
                         className="text-sm font-semibold text-[var(--danger)] hover:text-[var(--danger-hover)] transition-colors"

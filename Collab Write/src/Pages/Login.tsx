@@ -2,18 +2,16 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useToast } from "../Context/ToastContext";
-import { useCookies } from "react-cookie";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [cookies] = useCookies(["token"]);
   const { addToast } = useToast();
 
   useEffect(() => {
-    if (cookies.token) {
+    if (localStorage.getItem("isLoggedIn")) {
       navigate("/");
     }
-  }, [cookies.token]);
+  }, [navigate]);
 
   const [inputValue, setInputValue] = useState({ email: "", password: "" });
   const { email, password } = inputValue;
@@ -32,7 +30,7 @@ const Login = () => {
       const { success, message } = data;
       if (success) {
         handleSuccess(message);
-
+        localStorage.setItem("isLoggedIn", "true");
         setTimeout(() => {
           navigate("/");
         }, 200);

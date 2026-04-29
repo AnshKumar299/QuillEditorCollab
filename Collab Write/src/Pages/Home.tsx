@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useCookies } from "react-cookie";
 import axios from "axios";
 import { useToast } from "../Context/ToastContext";
 import Edit from "../Components/Edit.tsx";
@@ -14,7 +13,6 @@ const socket = io(import.meta.env.VITE_BACKEND_URL, { autoConnect: false });
 const Home = () => {
     const navigate = useNavigate();
     const { id } = useParams();
-    const [cookies, , removeCookie] = useCookies(["token"]);
     const { addToast } = useToast();
     const [isVerified, setIsVerified] = useState(false);
     const [username, setUsername] = useState("");
@@ -76,7 +74,7 @@ const Home = () => {
 
     useEffect(() => {
         const verifyCookie = async () => {
-            if (!cookies.token) { navigate("/login"); return; }
+            if (!localStorage.getItem("isLoggedIn")) { navigate("/login"); return; }
             try {
                 const { data } = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/`, {}, { withCredentials: true });
                 const { status, user } = data;
@@ -84,11 +82,11 @@ const Home = () => {
                     setIsVerified(true);
                     setUsername(user);
                     addToast(`Welcome back, ${user}`, "success");
-                } else { removeCookie("token", { path: "/" }); navigate("/login"); }
-            } catch { removeCookie("token", { path: "/" }); navigate("/login"); }
+                } else { localStorage.removeItem("isLoggedIn"); navigate("/login"); }
+            } catch { localStorage.removeItem("isLoggedIn"); navigate("/login"); }
         };
         verifyCookie();
-    }, [cookies.token, navigate, removeCookie]);
+    }, [navigate]);
 
     if (!isVerified) {
         return (

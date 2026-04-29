@@ -2,18 +2,16 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useToast } from "../Context/ToastContext";
-import { useCookies } from "react-cookie";
 
 const Signup = () => {
   const navigate = useNavigate();
-  const [cookies] = useCookies(["token"]);
   const { addToast } = useToast();
 
   useEffect(() => {
-    if (cookies.token) {
+    if (localStorage.getItem("isLoggedIn")) {
       navigate("/");
     }
-  }, [cookies.token, navigate]);
+  }, [navigate]);
 
   const [inputValue, setInputValue] = useState({ email: "", password: "", username: "" });
   const { email, password, username } = inputValue;
@@ -30,7 +28,7 @@ const Signup = () => {
     try {
       const { data } = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/signup`, { ...inputValue }, { withCredentials: true });
       const { success, message } = data;
-      if (success) { handleSuccess(message); navigate("/"); }
+      if (success) { handleSuccess(message); localStorage.setItem("isLoggedIn", "true"); navigate("/"); }
       else { handleError(message); }
     } catch (error) { console.log(error); }
     setInputValue({ ...inputValue, email: "", password: "", username: "" });

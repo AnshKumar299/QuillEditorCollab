@@ -34,18 +34,11 @@ const Home = () => {
         socket.connect();
         if (socket.connected) setSocketId(socket.id || "");
         socket.on("connect", () => setSocketId(socket.id || ""));
-        
+
         // Initial load
         socket.on("load-document", (data) => {
             if (data.content) setDelta(data.content);
             if (data.title) setDocTitle(data.title);
-        });
-
-        // Receive changes from other users
-        socket.on("receive-delta", (deltaChange) => {
-            if (quillRef.current) {
-                quillRef.current.getEditor().updateContents(deltaChange);
-            }
         });
 
         socket.on("document-renamed", (user, newTitle) => {
@@ -62,11 +55,10 @@ const Home = () => {
         socket.on("receive-chat-message", (user, msg) => {
             setLogs((prev) => [...prev, { type: 'message', user, text: msg }]);
         });
-        
+
         return () => {
             socket.off("connect");
             socket.off("load-document");
-            socket.off("receive-delta");
             socket.off("document-renamed");
             socket.off("user-joined");
             socket.off("user-left");
@@ -102,7 +94,7 @@ const Home = () => {
     if (!isVerified) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <p className="text-sm text-[#999]">Loading...</p>
+                <p className="text-sm text-[var(--text-muted)]">Loading...</p>
             </div>
         );
     }
@@ -116,16 +108,16 @@ const Home = () => {
 
     return (
         <div className="min-h-screen flex flex-col bg-[var(--surface)] text-[var(--on-surface)]">
-            <Navbar 
-                username={username} 
-                socketId={socketId} 
-                socket={socket} 
-                currentRoom={currentRoom} 
-                setCurrentRoom={setCurrentRoom} 
+            <Navbar
+                username={username}
+                socketId={socketId}
+                socket={socket}
+                currentRoom={currentRoom}
+                setCurrentRoom={setCurrentRoom}
                 docTitle={docTitle}
                 setDocTitle={setDocTitle}
             />
-            <main className="flex-1 flex bg-[var(--surface)] overflow-hidden relative bg-gradient-to-br from-[#131313] to-[#1a1a2e]/20">
+            <main className="flex-1 flex bg-[var(--surface)] overflow-hidden relative bg-gradient-to-br from-[var(--gradient-start)] to-[var(--gradient-end)]">
                 {/* Editor Container */}
                 <div className="flex-1 flex justify-center p-4 sm:p-8 overflow-y-auto relative">
                     <div className="w-full max-w-5xl bg-[var(--surface-container-low)]/80 backdrop-blur-md border border-[var(--outline-variant)] rounded-2xl flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-h-full relative overflow-hidden">
@@ -139,9 +131,6 @@ const Home = () => {
                 </div>
             </main>
 
-            <button className="fixed bottom-4 left-4 bg-[var(--surface-container-high)] border border-[var(--outline-variant)] px-2 py-1 text-xs font-mono rounded-md text-[var(--on-surface-variant)] opacity-20 hover:opacity-100 transition-opacity z-50" onClick={() => {
-                console.log(quillRef.current?.getEditor().getContents());
-            }}>Debug: Get Delta</button>
         </div>
     );
 };

@@ -90,9 +90,9 @@ io.on("connection", (socket) => {
         try {
             const document = await Document.findById(id);
             if (document) {
-                socket.emit("load-document", { 
-                    content: document.content, 
-                    title: document.title 
+                socket.emit("load-document", {
+                    content: document.content,
+                    title: document.title
                 });
             }
         } catch (err) {
@@ -111,18 +111,18 @@ io.on("connection", (socket) => {
     socket.on("rename-document", async (id, title) => {
         try {
             await Document.findByIdAndUpdate(id, { title });
-            
+
             // Send to others in the document room
             socket.to(id).emit("document-renamed", socket.username || socket.id, title);
-            
+
             // If the user is in a custom collab room, send to others there too
             if (socket.currentRoom && socket.currentRoom !== id) {
                 socket.to(socket.currentRoom).emit("document-renamed", socket.username || socket.id, title);
             }
-            
+
             // Explicitly send back to the user who renamed it so their log updates
             socket.emit("document-renamed", socket.username || socket.id, title);
-            
+
         } catch (err) {
             console.error("Error renaming document:", err);
         }
@@ -135,6 +135,8 @@ io.on("connection", (socket) => {
     socket.on("chat-message", (id, username, message) => {
         socket.to(id).emit("receive-chat-message", username, message);
     });
+
+
 
 
 

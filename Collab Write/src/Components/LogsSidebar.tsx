@@ -61,7 +61,7 @@ const LogsSidebar: React.FC<LogsSidebarProps> = ({ logs, currentRoom, onSendMess
 
             {/* Message Input Section */}
             <div className="p-3 bg-[var(--surface-container-low)] border-t border-[var(--outline-variant)]">
-                <div className={`flex items-center bg-[#0a0a0a] rounded-full px-3 py-1.5 border border-[var(--outline-variant)] transition-colors ${currentRoom ? 'focus-within:border-[var(--secondary-container)] focus-within:ring-1 focus-within:ring-[var(--secondary-container)]' : 'opacity-50'}`}>
+                <div className={`flex items-center bg-[var(--nav-bg)] rounded-full px-3 py-1.5 border border-[var(--outline-variant)] transition-colors ${currentRoom ? 'focus-within:border-[var(--secondary-container)] focus-within:ring-1 focus-within:ring-[var(--secondary-container)]' : 'opacity-50'}`}>
                     <input 
                         type="text" 
                         value={inputMsg}

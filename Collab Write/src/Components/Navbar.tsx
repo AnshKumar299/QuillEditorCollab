@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useCookies } from "react-cookie";
 import { toast } from "react-toastify";
-import { Pencil, Check } from "lucide-react";
+import { Pencil, Check, Sun, Moon, Info, X } from "lucide-react";
 
 interface NavbarProps {
     username: string;
@@ -21,6 +21,27 @@ const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTi
     const [joinInput, setJoinInput] = useState("");
     const [isEditingRoom, setIsEditingRoom] = useState(false);
     const [editRoomInput, setEditRoomInput] = useState("");
+    const [isInfoOpen, setIsInfoOpen] = useState(false);
+    const [isLightMode, setIsLightMode] = useState(() => {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'light') {
+            document.documentElement.classList.add('light');
+            return true;
+        }
+        return false;
+    });
+
+    const toggleTheme = () => {
+        if (isLightMode) {
+            document.documentElement.classList.remove('light');
+            localStorage.setItem('theme', 'dark');
+            setIsLightMode(false);
+        } else {
+            document.documentElement.classList.add('light');
+            localStorage.setItem('theme', 'light');
+            setIsLightMode(true);
+        }
+    };
 
     const handleJoinRoom = () => {
         if (!joinInput.trim()) return;
@@ -35,7 +56,7 @@ const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTi
             setIsEditingRoom(false);
             return;
         }
-        
+
         if (!editRoomInput.trim()) {
             socket.emit("leave-room", currentRoom, username);
             setCurrentRoom("");
@@ -61,7 +82,8 @@ const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTi
     };
 
     return (
-        <header className="h-16 flex items-center justify-between px-6 border-b border-[var(--outline-variant)] bg-[var(--surface-container-low)]/80 backdrop-blur-md shrink-0 z-20">
+        <>
+            <header className="h-16 flex items-center justify-between px-6 border-b border-[var(--outline-variant)] bg-[var(--surface-container-low)]/80 backdrop-blur-md shrink-0 z-20">
             <div className="flex items-center gap-4">
                 <Link to="/" className="text-lg font-bold text-[var(--primary)] tracking-tight hover:text-[var(--primary-container)] transition-colors">
                     Collab Write
@@ -84,7 +106,7 @@ const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTi
             <div className="flex items-center gap-4">
                 {/* Room Section */}
                 {currentRoom ? (
-                    <div className="flex items-center gap-2 bg-[#0a0a0a] border border-[var(--outline-variant)] px-3 py-1.5 rounded-md">
+                    <div className="flex items-center gap-2 bg-[var(--nav-bg)] border border-[var(--outline-variant)] px-3 py-1.5 rounded-md">
                         <span className="text-[11px] text-[var(--outline)] font-semibold uppercase tracking-wider hidden sm:inline font-mono">Room</span>
                         {isEditingRoom ? (
                             <div className="flex items-center gap-1.5">
@@ -113,7 +135,7 @@ const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTi
                         <input
                             type="text"
                             placeholder="Room ID"
-                            className="text-sm bg-[#0a0a0a] border border-[var(--outline-variant)] outline-none rounded px-2.5 py-1.5 w-28 focus:border-[var(--secondary-container)] focus:ring-1 focus:ring-[var(--secondary-container)] transition-colors text-[var(--on-surface)] font-mono placeholder-[var(--outline)]"
+                            className="text-sm bg-[var(--nav-bg)] border border-[var(--outline-variant)] outline-none rounded px-2.5 py-1.5 w-28 focus:border-[var(--secondary-container)] focus:ring-1 focus:ring-[var(--secondary-container)] transition-colors text-[var(--on-surface)] font-mono placeholder-[var(--outline)]"
                             value={joinInput}
                             onChange={(e) => setJoinInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleJoinRoom()}
@@ -122,13 +144,17 @@ const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTi
                     </div>
                 )}
 
-                {/* Socket ID */}
-                {socketId && (
-                    <div className="flex items-center gap-1.5 hidden lg:flex bg-[#0a0a0a] border border-[var(--outline-variant)] px-2 py-1 rounded">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--secondary-container)] animate-pulse shadow-[0_0_5px_var(--secondary-container)]"></span>
-                        <span className="text-[11px] text-[var(--on-surface-variant)] font-mono tracking-tight">ID: {socketId}</span>
-                    </div>
-                )}
+                <div className="h-6 w-px bg-[var(--outline-variant)] mx-1 hidden sm:block"></div>
+
+                {/* Info Button */}
+                <button onClick={() => setIsInfoOpen(true)} className="text-[var(--outline)] hover:text-[var(--primary)] transition-colors p-1.5 rounded hover:bg-[var(--surface-container-high)]" title="How to use">
+                    <Info size={18} />
+                </button>
+
+                {/* Theme Toggle */}
+                <button onClick={toggleTheme} className="text-[var(--outline)] hover:text-[var(--primary)] transition-colors p-1.5 rounded hover:bg-[var(--surface-container-high)]" title="Toggle Theme">
+                    {isLightMode ? <Moon size={18} /> : <Sun size={18} />}
+                </button>
 
                 <div className="h-6 w-px bg-[var(--outline-variant)] mx-1 hidden sm:block"></div>
 
@@ -145,12 +171,55 @@ const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTi
                         navigate("/login");
                         toast.info("Logged out");
                     }}
-                    className="text-sm text-[var(--outline)] hover:text-[#ffb4ab] transition-colors font-medium"
+                    className="text-sm text-[var(--outline)] hover:text-[var(--danger)] transition-colors font-medium"
                 >
                     Log out
                 </button>
             </div>
-        </header>
+            </header>
+
+            {/* Info Modal */}
+            {isInfoOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-[var(--surface-container-high)] border border-[var(--outline-variant)] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] w-full max-w-md overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--outline-variant)] bg-[var(--surface-container-low)]">
+                            <h2 className="text-lg font-bold text-[var(--on-surface)] flex items-center gap-2">
+                                <Info size={20} className="text-[var(--primary)]" />
+                                How to use Collab Write
+                            </h2>
+                            <button onClick={() => setIsInfoOpen(false)} className="text-[var(--outline)] hover:text-[var(--danger)] transition-colors p-1 rounded-md hover:bg-black/10">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto max-h-[70vh] flex flex-col gap-5 text-[15px] text-[var(--on-surface-variant)] leading-relaxed">
+                            <p>Welcome to <strong>Collab Write</strong>, a real-time collaborative document editor.</p>
+                            
+                            <div className="flex flex-col gap-3">
+                                <div className="bg-[var(--surface)] p-3 rounded-lg border border-[var(--outline-variant)]">
+                                    <h3 className="font-semibold text-[var(--on-surface)] mb-1">Rooms & Joining</h3>
+                                    <p className="text-sm">Create or join a room using the input in the navbar. Anyone in the same room will see your edits instantly.</p>
+                                </div>
+                                
+                                <div className="bg-[var(--surface)] p-3 rounded-lg border border-[var(--outline-variant)]">
+                                    <h3 className="font-semibold text-[var(--on-surface)] mb-1">Live Collaboration</h3>
+                                    <p className="text-sm">Type directly in the editor. Your changes are perfectly synced to all users using operational transforms (Delta).</p>
+                                </div>
+                                
+                                <div className="bg-[var(--surface)] p-3 rounded-lg border border-[var(--outline-variant)]">
+                                    <h3 className="font-semibold text-[var(--on-surface)] mb-1">Chat & Logs</h3>
+                                    <p className="text-sm">Use the sidebar to send messages to other collaborators and track when users join or leave the room.</p>
+                                </div>
+                                
+                                <div className="bg-[var(--surface)] p-3 rounded-lg border border-[var(--outline-variant)]">
+                                    <h3 className="font-semibold text-[var(--on-surface)] mb-1">Auto-Save</h3>
+                                    <p className="text-sm">Documents are automatically securely saved to the database after 2 seconds of inactivity.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 

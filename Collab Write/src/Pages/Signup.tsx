@@ -69,7 +69,7 @@ const Signup = () => {
               <input
                 type="email" name="email" id="email" value={email}
                 placeholder="you@example.com" onChange={handleOnChange}
-                className="w-full px-4 py-2.5 bg-[#0e0e0e] border border-[var(--outline-variant)] rounded-md text-[var(--on-surface)] placeholder-[var(--outline)] focus:outline-none focus:border-[var(--secondary-container)] focus:ring-1 focus:ring-[var(--secondary-container)] transition-all"
+                className="w-full px-4 py-2.5 bg-[var(--input-bg)] border border-[var(--outline-variant)] rounded-md text-[var(--on-surface)] placeholder-[var(--outline)] focus:outline-none focus:border-[var(--secondary-container)] focus:ring-1 focus:ring-[var(--secondary-container)] transition-all"
                 autoComplete="email" required
               />
             </div>
@@ -78,7 +78,7 @@ const Signup = () => {
               <input
                 type="text" name="username" id="username" value={username}
                 placeholder="johndoe" onChange={handleOnChange}
-                className="w-full px-4 py-2.5 bg-[#0e0e0e] border border-[var(--outline-variant)] rounded-md text-[var(--on-surface)] placeholder-[var(--outline)] focus:outline-none focus:border-[var(--secondary-container)] focus:ring-1 focus:ring-[var(--secondary-container)] transition-all"
+                className="w-full px-4 py-2.5 bg-[var(--input-bg)] border border-[var(--outline-variant)] rounded-md text-[var(--on-surface)] placeholder-[var(--outline)] focus:outline-none focus:border-[var(--secondary-container)] focus:ring-1 focus:ring-[var(--secondary-container)] transition-all"
                 autoComplete="username" required
               />
             </div>
@@ -87,7 +87,7 @@ const Signup = () => {
               <input
                 type="password" name="password" id="password" value={password}
                 placeholder="At least 8 characters" onChange={handleOnChange}
-                className="w-full px-4 py-2.5 bg-[#0e0e0e] border border-[var(--outline-variant)] rounded-md text-[var(--on-surface)] placeholder-[var(--outline)] focus:outline-none focus:border-[var(--secondary-container)] focus:ring-1 focus:ring-[var(--secondary-container)] transition-all"
+                className="w-full px-4 py-2.5 bg-[var(--input-bg)] border border-[var(--outline-variant)] rounded-md text-[var(--on-surface)] placeholder-[var(--outline)] focus:outline-none focus:border-[var(--secondary-container)] focus:ring-1 focus:ring-[var(--secondary-container)] transition-all"
                 autoComplete="new-password" required
               />
             </div>

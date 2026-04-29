@@ -14,6 +14,35 @@
   --primary-container: #008080;
   --secondary-container: #7000ff;
   --outline-variant: #333333;
+  
+  --gradient-start: #131313;
+  --gradient-end: rgba(26, 26, 46, 0.2);
+  --danger: #ffb4ab;
+  --danger-hover: #ffdad6;
+  --input-bg: #0e0e0e;
+  --nav-bg: #0a0a0a;
+  --text-muted: #999999;
+}
+
+:root.light {
+  --surface: #ffffff;
+  --surface-container-low: #f8f9fa;
+  --surface-container-high: #e9ecef;
+  --on-surface: #121212;
+  --on-surface-variant: #4a4a4a;
+  --primary: #008080;
+  --on-primary: #ffffff;
+  --primary-container: #b2ebf2;
+  --secondary-container: #d1c4e9;
+  --outline-variant: #e0e0e0;
+  
+  --gradient-start: #fdfbfb;
+  --gradient-end: #ebedee;
+  --danger: #d32f2f;
+  --danger-hover: #b71c1c;
+  --input-bg: #ffffff;
+  --nav-bg: #f8f9fa;
+  --text-muted: #6c757d;
 }
 
 body {

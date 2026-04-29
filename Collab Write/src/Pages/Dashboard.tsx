@@ -60,7 +60,7 @@ const Dashboard = () => {
         }
     };
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center text-[#999]">Loading...</div>;
+    if (loading) return <div className="min-h-screen flex items-center justify-center text-[var(--text-muted)]">Loading...</div>;
 
     return (
         <div className="min-h-screen bg-[var(--surface)] text-[var(--on-surface)] flex flex-col">
@@ -73,7 +73,7 @@ const Dashboard = () => {
                             removeCookie("token", { path: "/" });
                             navigate("/login");
                         }}
-                        className="text-sm font-semibold text-[#ffb4ab] hover:text-[#ffdad6] transition-colors"
+                        className="text-sm font-semibold text-[var(--danger)] hover:text-[var(--danger-hover)] transition-colors"
                     >
                         Logout
                     </button>

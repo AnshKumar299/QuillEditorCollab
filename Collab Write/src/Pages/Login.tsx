@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { useToast } from "../Context/ToastContext";
 import { useCookies } from "react-cookie";
 
 const Login = () => {
   const navigate = useNavigate();
   const [cookies] = useCookies(["token"]);
+  const { addToast } = useToast();
 
   useEffect(() => {
     if (cookies.token) {
@@ -21,13 +22,13 @@ const Login = () => {
     setInputValue({ ...inputValue, [name]: value });
   };
 
-  const handleError = (err: string) => toast.error(err, { position: "top-right" });
-  const handleSuccess = (msg: string) => toast.success(msg, { position: "top-right", toastId: "loginSuccess" });
+  const handleError = (err: string) => addToast(err, "error");
+  const handleSuccess = (msg: string) => addToast(msg, "success");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post("http://localhost:3000/login", { ...inputValue }, { withCredentials: true });
+      const { data } = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/login`, { ...inputValue }, { withCredentials: true });
       const { success, message } = data;
       if (success) { handleSuccess(message); navigate("/"); }
       else { handleError(message); }

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCookies } from "react-cookie";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { useToast } from "../Context/ToastContext";
 import { Sun, Moon } from "lucide-react";
 
 interface Document {
@@ -17,6 +17,7 @@ const Dashboard = () => {
     const [documents, setDocuments] = useState<Document[]>([]);
     const [username, setUsername] = useState("");
     const [loading, setLoading] = useState(true);
+    const { addToast } = useToast();
     const [isLightMode, setIsLightMode] = useState(() => {
         const saved = localStorage.getItem('theme');
         if (saved === 'light') {
@@ -46,11 +47,11 @@ const Dashboard = () => {
             }
             try {
                 // Verify Auth
-                const authRes = await axios.post("http://localhost:3000/", {}, { withCredentials: true });
+                const authRes = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/`, {}, { withCredentials: true });
                 if (authRes.data.status) {
                     setUsername(authRes.data.user);
                     // Fetch Documents
-                    const docRes = await axios.get("http://localhost:3000/documents/list", { withCredentials: true });
+                    const docRes = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/documents/list`, { withCredentials: true });
                     if (docRes.data.status) {
                         setDocuments(docRes.data.documents);
                     }
@@ -71,13 +72,13 @@ const Dashboard = () => {
 
     const createDocument = async () => {
         try {
-            const res = await axios.post("http://localhost:3000/documents/create", {}, { withCredentials: true });
+            const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/documents/create`, {}, { withCredentials: true });
             if (res.data.status) {
                 navigate(`/edit/${res.data.document._id}`);
             }
         } catch (err) {
             console.error(err);
-            toast.error("Failed to create document");
+            addToast("Failed to create document", "error");
         }
     };
 

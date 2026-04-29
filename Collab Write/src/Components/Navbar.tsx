@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useCookies } from "react-cookie";
-import { toast } from "react-toastify";
+import { useToast } from "../Context/ToastContext";
 import { Pencil, Check, Sun, Moon, Info, X, Download } from "lucide-react";
 
 interface NavbarProps {
@@ -18,6 +18,7 @@ interface NavbarProps {
 const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTitle, setDocTitle, onDownload }: NavbarProps) => {
     const navigate = useNavigate();
     const [cookies, setCookie, removeCookie] = useCookies(["token"]);
+    const { addToast } = useToast();
 
     const [joinInput, setJoinInput] = useState("");
     const [isEditingRoom, setIsEditingRoom] = useState(false);
@@ -49,7 +50,7 @@ const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTi
         socket.emit("join-room", joinInput, username);
         setCurrentRoom(joinInput);
         setJoinInput("");
-        toast.success(`Joined room: ${joinInput}`);
+        addToast(`Joined room: ${joinInput}`, "success");
     };
 
     const handleRenameRoom = () => {
@@ -62,7 +63,7 @@ const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTi
             socket.emit("leave-room", currentRoom, username);
             setCurrentRoom("");
             setIsEditingRoom(false);
-            toast.info("Left the room");
+            addToast("Left the room", "info");
             return;
         }
 
@@ -70,7 +71,7 @@ const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTi
         socket.emit("join-room", editRoomInput, username);
         setCurrentRoom(editRoomInput);
         setIsEditingRoom(false);
-        toast.success(`Joined room: ${editRoomInput}`);
+        addToast(`Joined room: ${editRoomInput}`, "success");
     };
 
     const handleTitleRename = (newTitle: string) => {
@@ -177,7 +178,7 @@ const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTi
                     onClick={() => {
                         removeCookie("token", { path: "/" });
                         navigate("/login");
-                        toast.info("Logged out");
+                        addToast("Logged out", "info");
                     }}
                     className="text-sm text-[var(--outline)] hover:text-[var(--danger)] transition-colors font-medium"
                 >

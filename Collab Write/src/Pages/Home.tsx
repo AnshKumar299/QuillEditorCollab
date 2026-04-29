@@ -2,19 +2,20 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useCookies } from "react-cookie";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { useToast } from "../Context/ToastContext";
 import Edit from "../Components/Edit.tsx";
 import Navbar from "../Components/Navbar.tsx";
 import LogsSidebar from "../Components/LogsSidebar.tsx";
 import { io } from "socket.io-client";
 import * as quillToWord from "quill-to-word";
 
-const socket = io("http://localhost:3000", { autoConnect: false });
+const socket = io(import.meta.env.VITE_BACKEND_URL, { autoConnect: false });
 
 const Home = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [cookies, setCookie, removeCookie] = useCookies(["token"]);
+    const { addToast } = useToast();
     const [isVerified, setIsVerified] = useState(false);
     const [username, setUsername] = useState("");
     const usernameRef = useRef("");
@@ -80,12 +81,12 @@ const Home = () => {
         const verifyCookie = async () => {
             if (!cookies.token) { navigate("/login"); return; }
             try {
-                const { data } = await axios.post("http://localhost:3000/", {}, { withCredentials: true });
+                const { data } = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/`, {}, { withCredentials: true });
                 const { status, user } = data;
                 if (status) {
                     setIsVerified(true);
                     setUsername(user);
-                    toast.success(`Welcome back, ${user}`, { toastId: "welcome", autoClose: 2500 });
+                    addToast(`Welcome back, ${user}`, "success");
                 } else { removeCookie("token", { path: "/" }); navigate("/login"); }
             } catch { removeCookie("token", { path: "/" }); navigate("/login"); }
         };
@@ -120,7 +121,7 @@ const Home = () => {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-        toast.success("Document downloaded!");
+        addToast("Document downloaded!", "success");
     };
 
     return (

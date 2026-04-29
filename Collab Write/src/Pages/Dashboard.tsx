@@ -13,7 +13,7 @@ interface Document {
 
 const Dashboard = () => {
     const navigate = useNavigate();
-    const [cookies, setCookie, removeCookie] = useCookies(["token"]);
+    const [cookies, , removeCookie] = useCookies(["token"]);
     const [documents, setDocuments] = useState<Document[]>([]);
     const [username, setUsername] = useState("");
     const [loading, setLoading] = useState(true);

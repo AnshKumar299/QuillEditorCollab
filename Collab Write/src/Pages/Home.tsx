@@ -14,14 +14,13 @@ const socket = io(import.meta.env.VITE_BACKEND_URL, { autoConnect: false });
 const Home = () => {
     const navigate = useNavigate();
     const { id } = useParams();
-    const [cookies, setCookie, removeCookie] = useCookies(["token"]);
+    const [cookies, , removeCookie] = useCookies(["token"]);
     const { addToast } = useToast();
     const [isVerified, setIsVerified] = useState(false);
     const [username, setUsername] = useState("");
     const usernameRef = useRef("");
     useEffect(() => { usernameRef.current = username; }, [username]);
     const [currentRoom, setCurrentRoom] = useState("");
-    const [socketId, setSocketId] = useState("");
     const [delta, setDelta] = useState({});
     const [docTitle, setDocTitle] = useState("Untitled");
     const quillRef = useRef<any>(null);
@@ -34,8 +33,6 @@ const Home = () => {
 
     useEffect(() => {
         socket.connect();
-        if (socket.connected) setSocketId(socket.id || "");
-        socket.on("connect", () => setSocketId(socket.id || ""));
 
         // Initial load
         socket.on("load-document", (data) => {
@@ -128,7 +125,6 @@ const Home = () => {
         <div className="min-h-screen flex flex-col bg-[var(--surface)] text-[var(--on-surface)]">
             <Navbar
                 username={username}
-                socketId={socketId}
                 socket={socket}
                 currentRoom={currentRoom}
                 setCurrentRoom={setCurrentRoom}

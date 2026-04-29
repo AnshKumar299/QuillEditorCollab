@@ -1,5 +1,6 @@
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+// @ts-expect-error - quill-image-resize-module-react does not have type definitions
 import ImageResize from "quill-image-resize-module-react";
 import { Quill } from "react-quill";
 import { useEffect, useRef } from "react";

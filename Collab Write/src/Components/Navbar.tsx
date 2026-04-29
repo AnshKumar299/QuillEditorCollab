@@ -6,7 +6,6 @@ import { Pencil, Check, Sun, Moon, Info, X, Download } from "lucide-react";
 
 interface NavbarProps {
     username: string;
-    socketId: string;
     socket: any;
     currentRoom: string;
     setCurrentRoom: (room: string) => void;
@@ -15,9 +14,9 @@ interface NavbarProps {
     onDownload?: () => void;
 }
 
-const Navbar = ({ username, socketId, socket, currentRoom, setCurrentRoom, docTitle, setDocTitle, onDownload }: NavbarProps) => {
+const Navbar = ({ username, socket, currentRoom, setCurrentRoom, docTitle, setDocTitle, onDownload }: NavbarProps) => {
     const navigate = useNavigate();
-    const [cookies, setCookie, removeCookie] = useCookies(["token"]);
+    const [_, __, removeCookie] = useCookies(["token"]);
     const { addToast } = useToast();
 
     const [joinInput, setJoinInput] = useState("");

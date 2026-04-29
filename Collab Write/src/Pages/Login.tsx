@@ -13,7 +13,7 @@ const Login = () => {
     if (cookies.token) {
       navigate("/");
     }
-  }, [cookies.token, navigate]);
+  }, [cookies.token]);
 
   const [inputValue, setInputValue] = useState({ email: "", password: "" });
   const { email, password } = inputValue;
@@ -30,7 +30,13 @@ const Login = () => {
     try {
       const { data } = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/login`, { ...inputValue }, { withCredentials: true });
       const { success, message } = data;
-      if (success) { handleSuccess(message); navigate("/"); }
+      if (success) {
+        handleSuccess(message);
+
+        setTimeout(() => {
+          navigate("/");
+        }, 200);
+      }
       else { handleError(message); }
     } catch (error) { console.log(error); }
     setInputValue({ ...inputValue, email: "", password: "" });

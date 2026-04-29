@@ -2,7 +2,7 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import ImageResize from "quill-image-resize-module-react";
 import { Quill } from "react-quill";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 Quill.register("modules/imageResize", ImageResize);
 
@@ -33,7 +33,7 @@ const formats = [
     "align", "link", "image", "video", "clean",
 ];
 
-const Edit = ({ delta, setDelta, socket, quillRef, currentRoom }: any) => {
+const Edit = ({ delta, socket, quillRef, currentRoom }: any) => {
     // Prevent echo loops if ReactQuill overrides the source='api' to 'user'
     const isApplyingRemote = useRef(false);
 

@@ -31,8 +31,10 @@ const Login = () => {
       if (success) {
         handleSuccess(message);
         localStorage.setItem("isLoggedIn", "true");
+        const returnUrl = localStorage.getItem("returnUrl");
+        localStorage.removeItem("returnUrl");
         setTimeout(() => {
-          navigate("/");
+          navigate(returnUrl || "/");
         }, 200);
       }
       else { handleError(message); }

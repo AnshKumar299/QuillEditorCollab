@@ -1,6 +1,7 @@
 import User from "../models/UserModel.js";
 import { createSecretToken } from "../util/SecretToken.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 export const Signup = async (req, res, next) => {
     try {
@@ -60,7 +61,7 @@ export const getData = async (req, res, next) => {
         if (!token) {
             return res.json({ message: "No token found" });
         }
-        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+        const decodedToken = jwt.verify(token, process.env.TOKEN_KEY);
         const user = await User.findById(decodedToken.id);
         if (!user) {
             return res.json({ message: "User not found" });

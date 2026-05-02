@@ -9,11 +9,19 @@ const documentSchema = new mongoose.Schema({
     type: Object, // Stores Quill Delta
     default: null,
   },
+  description: {
+    type: String,
+    default: "",
+  },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
+  sharedTo: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  }],
   collaborators: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"

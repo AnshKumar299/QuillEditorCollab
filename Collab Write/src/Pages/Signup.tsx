@@ -28,7 +28,13 @@ const Signup = () => {
     try {
       const { data } = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/signup`, { ...inputValue }, { withCredentials: true });
       const { success, message } = data;
-      if (success) { handleSuccess(message); localStorage.setItem("isLoggedIn", "true"); navigate("/"); }
+      if (success) {
+        handleSuccess(message);
+        localStorage.setItem("isLoggedIn", "true");
+        const returnUrl = localStorage.getItem("returnUrl");
+        localStorage.removeItem("returnUrl");
+        navigate(returnUrl || "/");
+      }
       else { handleError(message); }
     } catch (error) { console.log(error); }
     setInputValue({ ...inputValue, email: "", password: "", username: "" });

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useToast } from "../Context/ToastContext";
+import logo from "../assets/logo.png";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -46,7 +47,8 @@ const Login = () => {
     <div className="min-h-screen flex bg-[var(--surface)] text-[var(--on-surface)]">
       {/* Left panel - branding */}
       <div className="hidden lg:flex lg:w-[45%] bg-[var(--surface-container-low)] border-r border-[var(--outline-variant)] flex-col justify-between p-12">
-        <div>
+        <div className="flex items-center gap-3">
+          <img src={logo} alt="Logo" className="w-10 h-10 object-contain" />
           <h1 className="text-2xl font-bold tracking-tight text-[var(--primary)]">Collab Write</h1>
         </div>
         <div>
@@ -63,7 +65,8 @@ const Login = () => {
       {/* Right panel - form */}
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
-          <div className="lg:hidden mb-8">
+          <div className="lg:hidden mb-8 flex items-center gap-3">
+            <img src={logo} alt="Logo" className="w-8 h-8 object-contain" />
             <h1 className="text-xl font-bold text-[var(--primary)]">Collab Write</h1>
           </div>
 

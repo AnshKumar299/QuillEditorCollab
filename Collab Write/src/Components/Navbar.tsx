@@ -4,6 +4,7 @@ import { useCookies } from "react-cookie";
 import { useToast } from "../Context/ToastContext";
 import { Pencil, Check, Sun, Moon, Info, X, Download, FileText, FileImage } from "lucide-react";
 import axios from "axios";
+import logo from "../assets/logo.png";
 
 interface NavbarProps {
     username: string;
@@ -120,7 +121,8 @@ const Navbar = ({
         <>
             <header className="h-16 flex items-center justify-between px-6 border-b border-[var(--outline-variant)] bg-[var(--surface-container-low)]/80 backdrop-blur-md shrink-0 z-20">
                 <div className="flex items-center gap-4">
-                    <Link to="/" className="text-lg font-bold text-[var(--primary)] tracking-tight hover:text-[var(--primary-container)] transition-colors">
+                    <Link to="/" className="flex items-center gap-2 text-lg font-bold text-[var(--primary)] tracking-tight hover:text-[var(--primary-container)] transition-colors">
+                        <img src={logo} alt="Logo" className="w-7 h-7 object-contain" />
                         Collab Write
                     </Link>
                     <span className="text-[var(--outline-variant)] text-lg font-light">/</span>

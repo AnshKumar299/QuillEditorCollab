@@ -5,6 +5,7 @@ import { useToast } from "../Context/ToastContext";
 import { Sun, Moon, Share2, X, Users, LogIn } from "lucide-react";
 import { io } from "socket.io-client";
 import JoinRequestBanner from "../Components/JoinRequestBanner";
+import logo from "../assets/logo.png";
 
 const socket = io(import.meta.env.VITE_BACKEND_URL);
 
@@ -261,7 +262,10 @@ const Dashboard = () => {
         <div className="min-h-screen bg-[var(--surface)] text-[var(--on-surface)] flex flex-col">
             {/* Header / Taskbar */}
             <header className="bg-[var(--surface-container-low)]/80 backdrop-blur-md border-b border-[var(--outline-variant)] px-6 py-3 flex justify-between items-center sticky top-0 z-10 gap-4">
-                <h1 className="text-xl font-bold text-[var(--primary)] tracking-tight shrink-0">Collab Write</h1>
+                <div className="flex items-center gap-3">
+                    <img src={logo} alt="Logo" className="w-8 h-8 object-contain" />
+                    <h1 className="text-xl font-bold text-[var(--primary)] tracking-tight shrink-0">Collab Write</h1>
+                </div>
 
                 {/* Join Room Input */}
                 <div className="flex items-center gap-2 flex-1 max-w-xs">

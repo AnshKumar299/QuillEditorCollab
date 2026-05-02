@@ -16,7 +16,7 @@ dotenv.config();
 const app = express();
 app.use(
     cors({
-        origin: ["https://collab-write-delta.vercel.app", "http://localhost:5173"],
+        origin: ["https://collab-write-delta.vercel.app"],
         methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
         credentials: true,
     })
@@ -185,7 +185,7 @@ io.on("connection", (socket) => {
             }
 
             const isOwner = (userId && doc.owner._id.toString() === userId) ||
-                            (username && doc.owner.username === username);
+                (username && doc.owner.username === username);
             const isAlreadyShared = userId
                 ? doc.sharedTo.some(u => u._id.toString() === userId)
                 : false;

@@ -18,7 +18,6 @@ const Home = () => {
 
     const [isVerified, setIsVerified] = useState(false);
     const [username, setUsername] = useState("");
-    const [userId, setUserId] = useState("");
     const usernameRef = useRef("");
     useEffect(() => { usernameRef.current = username; }, [username]);
 
@@ -27,7 +26,6 @@ const Home = () => {
     const [docTitle, setDocTitle] = useState("Untitled");
     const [description, setDescription] = useState("");
     const [ownerUsername, setOwnerUsername] = useState("");
-    const [ownerId, setOwnerId] = useState("");
     const quillRef = useRef<any>(null);
     const [logs, setLogs] = useState<any[]>([]);
 
@@ -52,7 +50,6 @@ const Home = () => {
             if (data.title) setDocTitle(data.title);
             if (data.description !== undefined) setDescription(data.description);
             if (data.ownerUsername) setOwnerUsername(data.ownerUsername);
-            if (data.ownerId) setOwnerId(data.ownerId);
         });
 
         socket.on("document-renamed", (user, newTitle) => {
@@ -161,7 +158,6 @@ const Home = () => {
                 const { data } = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/getData`, {}, { withCredentials: true });
                 if (data.success && data.user) {
                     const uId = data.user._id;
-                    setUserId(uId);
                     socket.emit("request-join", { docId: id, username, userId: uId });
                 } else {
                     // Fallback: join without userId (auto-approve)

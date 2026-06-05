@@ -9,9 +9,22 @@ const documentSchema = new mongoose.Schema({
     type: Object, // Stores Quill Delta
     default: null,
   },
+  version: {
+    type: Number,
+    default: 0,
+    required: true,
+  },
   description: {
     type: String,
     default: "",
+  },
+  fileSize: {
+    type: Number,
+    default: 0,
+  },
+  lastEdited: {
+    type: Date,
+    default: Date.now,
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
@@ -21,10 +34,6 @@ const documentSchema = new mongoose.Schema({
   sharedTo: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-  }],
-  collaborators: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
   }],
 }, { timestamps: true });
 

@@ -1,6 +1,7 @@
 import Document from "../models/Document.js";
 import User from "../models/UserModel.js";
 import mongoose from "mongoose";
+import UserSetting from "../models/UserSetting.js";
 
 // Create a new document
 export const createDocument = async (req, res) => {
@@ -10,7 +11,8 @@ export const createDocument = async (req, res) => {
             owner: req.user._id,
             title: title || "Untitled Document",
         });
-        res.status(201).json({ status: true, document: newDoc });
+        const docObject = newDoc.toObject();
+        res.status(201).json({ status: true, document: docObject });
     } catch (err) {
         console.error(err);
         res.status(500).json({ status: false, message: "Error creating document" });
@@ -24,15 +26,18 @@ export const getUserDocuments = async (req, res) => {
 
         const [ownedDocs, sharedDocs] = await Promise.all([
             Document.find({ owner: userId })
-                .select("_id title description updatedAt")
+                .select("_id title description createdAt updatedAt fileSize lastEdited")
                 .sort({ updatedAt: -1 }),
             Document.find({ sharedTo: userId })
-                .select("_id title description updatedAt owner")
+                .select("_id title description createdAt updatedAt owner fileSize lastEdited")
                 .populate("owner", "username")
                 .sort({ updatedAt: -1 }),
         ]);
 
-        res.status(200).json({ status: true, ownedDocuments: ownedDocs, sharedDocuments: sharedDocs });
+        const ownedDocsMapped = ownedDocs.map(doc => doc.toObject());
+        const sharedDocsMapped = sharedDocs.map(doc => doc.toObject());
+
+        res.status(200).json({ status: true, ownedDocuments: ownedDocsMapped, sharedDocuments: sharedDocsMapped });
     } catch (err) {
         console.error(err);
         res.status(500).json({ status: false, message: "Error fetching documents" });
@@ -49,16 +54,18 @@ export const getDocumentById = async (req, res) => {
             return res.status(404).json({ status: false, message: "Document not found" });
         }
 
-        const isOwner = document.owner._id.toString() === req.user._id.toString();
-        const isShared = document.sharedTo.some(uid => uid.toString() === req.user._id.toString());
+        const isOwner = document.owner && document.owner._id && document.owner._id.toString() === req.user._id.toString();
+        const isShared = document.sharedTo && document.sharedTo.some(uid => uid && uid.toString() === req.user._id.toString());
 
         if (!isOwner && !isShared) {
             return res.status(403).json({ status: false, message: "Not authorized to access this document" });
         }
 
+        const docObject = document.toObject();
+
         res.status(200).json({
             status: true,
-            document,
+            document: docObject,
             isOwner,
         });
     } catch (err) {
@@ -165,5 +172,96 @@ export const addToSharedTo = async (documentId, userId) => {
         console.log(`addToSharedTo: doc=${documentId} user=${userObjectId} modified=${result.modifiedCount}`);
     } catch (err) {
         console.error("Error adding user to sharedTo:", err);
+    }
+};
+
+// Delete a document (owner-only)
+export const deleteDocument = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const document = await Document.findById(id);
+        if (!document) {
+            return res.status(404).json({ status: false, message: "Document not found" });
+        }
+        if (document.owner.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ status: false, message: "Only the owner can delete this document" });
+        }
+        await Document.findByIdAndDelete(id);
+        res.status(200).json({ status: true, message: "Document deleted successfully" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ status: false, message: "Error deleting document" });
+    }
+};
+
+// Get user settings (theme, view mode)
+export const getUserSettings = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        let settings = await UserSetting.findOne({ userId });
+        if (!settings) {
+            settings = await UserSetting.create({ userId });
+        }
+        res.status(200).json({ status: true, settings });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ status: false, message: "Error fetching user settings" });
+    }
+};
+
+// Update user settings (theme, view mode)
+export const updateUserSettings = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { lastTheme, lastViewType } = req.body;
+        const updates = {};
+        if (lastTheme) updates.lastTheme = lastTheme;
+        if (lastViewType) updates.lastViewType = lastViewType;
+
+        let settings = await UserSetting.findOneAndUpdate(
+            { userId },
+            updates,
+            { new: true, upsert: true }
+        );
+        res.status(200).json({ status: true, settings });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ status: false, message: "Error updating user settings" });
+    }
+};
+
+// Replicate/Copy a document for the current user
+export const copyDocument = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const sourceDoc = await Document.findById(id);
+
+        if (!sourceDoc) {
+            return res.status(404).json({ status: false, message: "Source document not found" });
+        }
+
+        const isOwner = sourceDoc.owner.toString() === req.user._id.toString();
+        const isShared = sourceDoc.sharedTo.some(uid => uid.toString() === req.user._id.toString());
+
+        if (!isOwner && !isShared) {
+            return res.status(403).json({ status: false, message: "Not authorized to copy this document" });
+        }
+
+        const newDoc = await Document.create({
+            owner: req.user._id,
+            title: `Copy of ${sourceDoc.title}`,
+            content: sourceDoc.content,
+            description: sourceDoc.description || "",
+            fileSize: sourceDoc.fileSize || 0,
+            version: 0,
+            lastEdited: new Date(),
+        });
+
+        const docObject = newDoc.toObject();
+
+        res.status(201).json({ status: true, document: docObject });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ status: false, message: "Error copying document" });
     }
 };

@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useCookies } from "react-cookie";
 import { useToast } from "../Context/ToastContext";
-import { Pencil, Check, Sun, Moon, Info, X, Download, FileText, FileImage } from "lucide-react";
+import { Sun, Moon, Info, X, Download, FileText, FileImage, Copy } from "lucide-react";
 import axios from "axios";
 import logo from "../assets/logo.png";
 
@@ -31,8 +31,6 @@ const Navbar = ({
     const { addToast } = useToast();
 
     const [joinInput, setJoinInput] = useState("");
-    const [isEditingRoom, setIsEditingRoom] = useState(false);
-    const [editRoomInput, setEditRoomInput] = useState("");
     const [isInfoOpen, setIsInfoOpen] = useState(false);
     const [isDownloadOpen, setIsDownloadOpen] = useState(false);
     const [descDraft, setDescDraft] = useState<string | null>(null);
@@ -66,27 +64,6 @@ const Navbar = ({
         addToast(`Joined room: ${joinInput}`, "success");
     };
 
-    const handleRenameRoom = () => {
-        if (editRoomInput === currentRoom) {
-            setIsEditingRoom(false);
-            return;
-        }
-
-        if (!editRoomInput.trim()) {
-            socket.emit("leave-room", currentRoom, username);
-            setCurrentRoom("");
-            setIsEditingRoom(false);
-            addToast("Left the room", "info");
-            return;
-        }
-
-        socket.emit("leave-room", currentRoom, username);
-        socket.emit("join-room", editRoomInput, username);
-        setCurrentRoom(editRoomInput);
-        setIsEditingRoom(false);
-        addToast(`Joined room: ${editRoomInput}`, "success");
-    };
-
     const handleTitleRename = (newTitle: string) => {
         if (!newTitle.trim() || !setDocTitle) return;
         setDocTitle(newTitle);
@@ -117,6 +94,11 @@ const Navbar = ({
         }
     };
 
+    const handleCopyRoomId = () => {
+        navigator.clipboard.writeText(currentRoom);
+        addToast("Document ID copied to clipboard!", "success");
+    };
+
     return (
         <>
             <header className="h-16 flex items-center justify-between px-6 border-b border-[var(--outline-variant)] bg-[var(--surface-container-low)]/80 backdrop-blur-md shrink-0 z-20">
@@ -144,34 +126,21 @@ const Navbar = ({
                     {/* Room Section */}
                     {currentRoom ? (
                         <div className="flex items-center gap-2 bg-[var(--nav-bg)] border border-[var(--outline-variant)] px-3 py-1.5 rounded-md">
-                            <span className="text-[11px] text-[var(--outline)] font-semibold uppercase tracking-wider hidden sm:inline font-mono">Room</span>
-                            {isEditingRoom ? (
-                                <div className="flex items-center gap-1.5">
-                                    <input
-                                        autoFocus
-                                        className="text-sm bg-[var(--surface-container-highest)] border border-[var(--outline-variant)] outline-none rounded px-1.5 py-0.5 w-24 text-[var(--on-surface)] focus:border-[var(--secondary-container)] font-mono"
-                                        value={editRoomInput}
-                                        onChange={(e) => setEditRoomInput(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleRenameRoom()}
-                                    />
-                                    <button onClick={handleRenameRoom} className="text-[var(--on-surface)] hover:text-[var(--secondary-container)] cursor-pointer p-0.5 rounded hover:bg-white/5">
-                                        <Check size={14} />
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-[var(--on-surface)] font-mono">{currentRoom}</span>
-                                    <button onClick={() => { setEditRoomInput(currentRoom); setIsEditingRoom(true); }} className="text-[var(--outline)] hover:text-[var(--primary)] cursor-pointer transition-colors">
-                                        <Pencil size={12} />
-                                    </button>
-                                </div>
-                            )}
+                            <span className="text-[11px] text-[var(--outline)] font-semibold uppercase tracking-wider hidden sm:inline font-mono">Document ID</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-semibold text-[var(--on-surface)] font-mono">
+                                    {currentRoom.length > 6 ? `${currentRoom.slice(0, 6)}...` : currentRoom}
+                                </span>
+                                <button onClick={handleCopyRoomId} className="text-[var(--outline)] hover:text-[var(--primary)] cursor-pointer transition-colors p-1 rounded hover:bg-white/5" title="Copy Document ID">
+                                    <Copy size={12} />
+                                </button>
+                            </div>
                         </div>
                     ) : (
                         <div className="flex items-center gap-2">
                             <input
                                 type="text"
-                                placeholder="Room ID"
+                                placeholder="Document ID"
                                 className="text-sm bg-[var(--nav-bg)] border border-[var(--outline-variant)] outline-none rounded px-2.5 py-1.5 w-28 focus:border-[var(--secondary-container)] focus:ring-1 focus:ring-[var(--secondary-container)] transition-colors text-[var(--on-surface)] font-mono placeholder-[var(--outline)]"
                                 value={joinInput}
                                 onChange={(e) => setJoinInput(e.target.value)}

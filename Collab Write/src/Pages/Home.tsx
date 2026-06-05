@@ -97,8 +97,9 @@ const Home = () => {
         });
 
         // Requester: denied
-        socket.on("join-denied", ({ message }) => {
-            addToast(message || "Join request was denied", "error");
+        socket.on("join-denied", (data: any) => {
+            const message = data?.message || "Join request was denied";
+            addToast(message, "error");
             navigate("/");
         });
 

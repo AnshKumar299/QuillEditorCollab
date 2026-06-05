@@ -24,6 +24,7 @@ export async function handleJoinRoom(io, socket, rawId, username) {
     socket.username = username;
     socket.join(id);
 
+    //check if the user is even authorized to access this document
     const document = await Document.findById(id)
         .populate("owner", "_id")
         .populate("sharedTo", "_id");
@@ -50,9 +51,13 @@ export async function handleJoinRoom(io, socket, rawId, username) {
             .populate("owner", "username _id");
         if (document) {
             let room = otRooms.get(id);
+
+            //get previous data if no room is present
             if (!room) {
                 let docContent = [];
                 if (document.content) {
+                    //needed for legacy content
+                    //quill delta used to store information as [{...}]. Now it stores as {ops: [{...}]}
                     docContent = Array.isArray(document.content.ops) ? document.content.ops : (Array.isArray(document.content) ? document.content : []);
                 }
                 room = {
@@ -66,6 +71,7 @@ export async function handleJoinRoom(io, socket, rawId, username) {
                 otRooms.set(id, room);
             }
 
+            //load data of current room
             socket.emit("load-document", {
                 content: room.content.ops,
                 version: room.version,
@@ -75,11 +81,6 @@ export async function handleJoinRoom(io, socket, rawId, username) {
                 ownerId: document.owner?._id?.toString() || "",
             });
 
-            // Auto-add to sharedTo if not owner and not already there
-            const isOwner = document.owner?._id?.toString() === socket.userId?.toString();
-            if (!isOwner && socket.userId) {
-                await addToSharedTo(id, socket.userId);
-            }
         }
     } catch (err) {
         console.error("Error loading document on join:", err);

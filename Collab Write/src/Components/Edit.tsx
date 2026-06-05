@@ -63,6 +63,7 @@ const Edit = ({ delta, socket, quillRef, currentRoom }: any) => {
             versionRef.current = data.version || 0;
             inflightDeltaRef.current = null;
             pendingDeltaRef.current = null;
+            editor.enable(true);
         };
 
         // 2. Listen to force-resync from server
@@ -73,6 +74,7 @@ const Edit = ({ delta, socket, quillRef, currentRoom }: any) => {
             inflightDeltaRef.current = null;
             pendingDeltaRef.current = null;
             isApplyingRemote.current = false;
+            editor.enable(true);
         };
 
         // 3. Listen to ACKs from server
@@ -119,15 +121,22 @@ const Edit = ({ delta, socket, quillRef, currentRoom }: any) => {
             }
         };
 
+        // 5. Handle join denial (disable editing)
+        const handleJoinDenied = () => {
+            editor.enable(false);
+        };
+
         socket.on("load-document", handleLoadDocument);
         socket.on("force-resync", handleForceResync);
         socket.on("ack-delta", handleAckDelta);
+        socket.on("join-denied", handleJoinDenied);
         editor.on('text-change', handleTextChange);
 
         return () => {
             socket.off("load-document", handleLoadDocument);
             socket.off("force-resync", handleForceResync);
             socket.off("ack-delta", handleAckDelta);
+            socket.off("join-denied", handleJoinDenied);
             editor.off('text-change', handleTextChange);
         };
     }, [socket, quillRef, currentRoom]);

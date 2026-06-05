@@ -226,9 +226,10 @@ const Dashboard = () => {
             }
         });
 
-        socket.on("join-denied", ({ message }) => {
+        socket.on("join-denied", (data: any) => {
             if (isJoining) {
-                addToast(message || "Join request was denied", "error");
+                const message = data?.message || "Join request was denied";
+                addToast(message, "error");
                 setIsJoining(false);
                 setJoiningStatus(null);
             }

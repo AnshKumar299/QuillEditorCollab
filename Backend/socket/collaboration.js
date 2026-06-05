@@ -12,14 +12,35 @@ export async function handleJoinRoom(io, socket, rawId, username) {
     const id = getValidObjectId(rawId);
     if (!id) return;
 
+    //handle if user's current socket does not point to current room
     if (socket.currentRoom && socket.currentRoom !== id) {
         socket.to(socket.currentRoom).emit("user-left", socket.username || socket.id);
         removeUserFromRoom(socket.currentRoom, socket.id);
         socket.leave(socket.currentRoom);
     }
+
+    //point the current room to this document 
     socket.currentRoom = id;
     socket.username = username;
     socket.join(id);
+
+    const document = await Document.findById(id)
+        .populate("owner", "_id")
+        .populate("sharedTo", "_id");
+
+    const isOwner =
+        document.owner._id.toString() === socket.userId;
+
+    const isShared =
+        document.sharedTo.some(
+            user => user._id.toString() === socket.userId
+        );
+
+    if (!isOwner && !isShared) {
+        socket.emit("join-denied");
+        return;
+    }
+
 
     addUserToRoom(id, socket.id, username);
     io.to(id).emit("user-joined", username || socket.id);

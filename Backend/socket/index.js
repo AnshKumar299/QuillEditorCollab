@@ -11,15 +11,22 @@ import {
 import { removeUserFromRoom } from "./state.js";
 import { broadcastUserLists } from "./roomManager.js";
 import { checkAndCleanupRoom } from "./cleanup.js";
+import { socketAuthMiddleware } from "../middlewares/SocketAuthMiddleware.js";
 
 export function initSocket(io) {
+    // ── JWT Auth Middleware ────────────────────────────────────────────────────
+    // Runs before any "connection" event. Rejects sockets with missing/invalid
+    // tokens so no handler below ever processes an unauthenticated request.
+    io.use(socketAuthMiddleware);
+
     io.on("connection", (socket) => {
         console.log("a user connected");
         console.log("ID : " + socket.id);
 
         socket.on("disconnect", async () => {
             console.log(socket.id + " disconnected");
-            if (socket.currentRoom) {
+            // Skip if leave-room already ran cleanup for this socket
+            if (socket.currentRoom && !socket.cleanupDone) {
                 const roomId = socket.currentRoom;
                 socket.to(roomId).emit("user-left", socket.username || socket.id);
                 removeUserFromRoom(roomId, socket.id);
@@ -58,14 +65,14 @@ export function initSocket(io) {
             handleSendDelta(io, socket, payload);
         });
 
-        // ── Chat Message ───────────────────────────────────────────────────────────
-        socket.on("chat-message", (rawId, username, message) => {
-            handleChatMessage(socket, rawId, username, message);
+        // ── Chat Message ─────────────────────────────────────────────────────────
+        socket.on("chat-message", (rawId, message) => {
+            handleChatMessage(socket, rawId, message);
         });
 
         // ── Leave Room ─────────────────────────────────────────────────────────────
-        socket.on("leave-room", async (rawId, username) => {
-            await handleLeaveRoom(io, socket, rawId, username);
+        socket.on("leave-room", async (rawId) => {
+            await handleLeaveRoom(io, socket, rawId);
         });
 
         // ── Description update via socket (real-time sync to room) ───────────────

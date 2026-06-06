@@ -1,31 +1,17 @@
-import crypto from "crypto";
-
-const algorithm = "aes-256-cbc";
-const key = crypto.scryptSync("QuillEditorCollabSecretKey", "salt", 32);
-const iv = Buffer.alloc(16, 0); // Fixed IV for deterministic encryption
-
-function decrypt(text) {
-    try {
-        if (!text) return null;
-        const decipher = crypto.createDecipheriv(algorithm, key, iv);
-        let decrypted = decipher.update(text, "hex", "utf8");
-        decrypted += decipher.final("utf8");
-        return decrypted;
-    } catch {
-        return null;
-    }
-}
-
+/**
+ * Validates that the given string is a well-formed MongoDB ObjectId
+ * (24 hex characters).
+ *
+ * This is purely a sanitization helper — it prevents garbage or injection
+ * payloads from ever reaching Mongoose queries. Authorization is enforced
+ * separately on every handler via JWT + isOwner/isShared checks.
+ *
+ * @param {string|null|undefined} id
+ * @returns {string|null} The id string if valid, otherwise null.
+ */
 export function getValidObjectId(id) {
-    if (!id) return null;
-    // If it's already a valid 24-character hex string (ObjectId), return it directly
-    if (/^[0-9a-fA-F]{24}$/.test(id)) {
+    if (id && /^[0-9a-fA-F]{24}$/.test(id)) {
         return id;
-    }
-    // Otherwise, try to decrypt it in case it's an encrypted ID
-    const decrypted = decrypt(id);
-    if (decrypted && /^[0-9a-fA-F]{24}$/.test(decrypted)) {
-        return decrypted;
     }
     return null;
 }

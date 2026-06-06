@@ -9,13 +9,16 @@ import { addToSharedTo } from "../controllers/DocumentController.js";
 //   2. Server finds owner socket → sends "join-request" to owner
 //   3. Owner approves/denies → emits "respond-join" { requesterId, approved }
 //   4. Server tells requester to proceed or reject
-export async function handleRequestJoin(io, socket, { docId: rawDocId, username, userId }) {
+export async function handleRequestJoin(io, socket, { docId: rawDocId, username }) {
     const docId = getValidObjectId(rawDocId);
     if (!docId) return;
 
+    // userId and user are already verified and attached by socketAuthMiddleware
+    const userId = socket.userId;
+    const resolvedUsername = username || socket.user?.username || socket.id;
+
     socket.pendingDocId = docId;
-    socket.username = username;
-    socket.userId = userId;
+    socket.username = resolvedUsername;
 
     try {
         const doc = await Document.findById(docId)
@@ -27,11 +30,10 @@ export async function handleRequestJoin(io, socket, { docId: rawDocId, username,
             return;
         }
 
-        const isOwner = (userId && doc.owner && doc.owner._id && doc.owner._id.toString() === userId.toString()) ||
-            (username && doc.owner && doc.owner.username === username);
-        const isAlreadyShared = userId
-            ? doc.sharedTo.some(user => user && user._id && user._id.toString() === userId.toString())
-            : false;
+        const isOwner = doc.owner && doc.owner._id.toString() === userId;
+        const isAlreadyShared = doc.sharedTo.some(
+            (user) => user && user._id && user._id.toString() === userId
+        );
 
         // Owner or already-approved user → join directly
         if (isOwner || isAlreadyShared) {
@@ -54,7 +56,7 @@ export async function handleRequestJoin(io, socket, { docId: rawDocId, username,
         pendingRequests.set(socket.id, { ownerSocketId: ownerSocket.socketId, docId });
         io.to(ownerSocket.socketId).emit("join-request", {
             requesterId: socket.id,
-            username,
+            username: resolvedUsername,
         });
 
     } catch (err) {

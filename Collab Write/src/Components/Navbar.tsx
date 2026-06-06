@@ -125,13 +125,13 @@ const Navbar = ({
                 <div className="flex items-center gap-4">
                     {/* Room Section */}
                     {currentRoom ? (
-                        <div className="flex items-center gap-2 bg-[var(--nav-bg)] border border-[var(--outline-variant)] px-3 py-1.5 rounded-md">
-                            <span className="text-[11px] text-[var(--outline)] font-semibold uppercase tracking-wider hidden sm:inline font-mono">Document ID</span>
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm font-semibold text-[var(--on-surface)] font-mono">
-                                    {currentRoom.length > 6 ? `${currentRoom.slice(0, 6)}...` : currentRoom}
+                        <div className="flex items-center gap-2 bg-[var(--nav-bg)] border border-[var(--outline-variant)] px-3 py-1.5 rounded-md max-w-[260px]">
+                            <span className="text-[11px] text-[var(--outline)] font-semibold uppercase tracking-wider hidden sm:inline font-mono shrink-0">Room ID</span>
+                            <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-xs font-semibold text-[var(--on-surface)] font-mono truncate" title={currentRoom}>
+                                    {currentRoom}
                                 </span>
-                                <button onClick={handleCopyRoomId} className="text-[var(--outline)] hover:text-[var(--primary)] cursor-pointer transition-colors p-1 rounded hover:bg-white/5" title="Copy Document ID">
+                                <button onClick={handleCopyRoomId} className="text-[var(--outline)] hover:text-[var(--primary)] cursor-pointer transition-colors p-1 rounded hover:bg-white/5 shrink-0" title="Copy Room ID to share">
                                     <Copy size={12} />
                                 </button>
                             </div>

@@ -12,38 +12,46 @@ export async function handleJoinRoom(io, socket, rawId, username) {
     const id = getValidObjectId(rawId);
     if (!id) return;
 
-    //handle if user's current socket does not point to current room
-    if (socket.currentRoom && socket.currentRoom !== id) {
-        socket.to(socket.currentRoom).emit("user-left", socket.username || socket.id);
-        removeUserFromRoom(socket.currentRoom, socket.id);
-        socket.leave(socket.currentRoom);
+    // Guard: middleware should always set this, but be defensive
+    if (!socket.userId) {
+        socket.emit("join-denied", { message: "Not authenticated" });
+        return;
     }
 
-    //point the current room to this document 
-    socket.currentRoom = id;
-    socket.username = username;
-    socket.join(id);
-
-    //check if the user is even authorized to access this document
+    // ── Authorization check BEFORE joining the room ───────────────────────
+    // Fetch only the fields needed to verify access rights
     const document = await Document.findById(id)
         .populate("owner", "_id")
         .populate("sharedTo", "_id");
 
-    const isOwner =
-        document.owner._id.toString() === socket.userId;
+    if (!document) {
+        socket.emit("join-denied", { message: "Document not found" });
+        return;
+    }
 
-    const isShared =
-        document.sharedTo.some(
-            user => user._id.toString() === socket.userId
-        );
+    const isOwner = document.owner._id.toString() === socket.userId;
+    const isShared = document.sharedTo.some(
+        (user) => user._id.toString() === socket.userId
+    );
 
     if (!isOwner && !isShared) {
         socket.emit("join-denied");
         return;
     }
 
+    // ── Authorized: now join the room and track the user ─────────────────
+    // Leave any previously active room first
+    if (socket.currentRoom && socket.currentRoom !== id) {
+        socket.to(socket.currentRoom).emit("user-left", socket.username || socket.id);
+        removeUserFromRoom(socket.currentRoom, socket.id);
+        socket.leave(socket.currentRoom);
+    }
 
-    addUserToRoom(id, socket.id, username);
+    socket.currentRoom = id;
+    socket.username = username;
+    socket.join(id);
+
+    addUserToRoom(id, socket.id, username, socket.userId);
     io.to(id).emit("user-joined", username || socket.id);
 
     try {
@@ -93,6 +101,7 @@ export async function handleJoinRoom(io, socket, rawId, username) {
 export async function handleSaveDocument(socket, rawId) {
     const id = getValidObjectId(rawId);
     if (!id) return;
+    if (socket.currentRoom !== id) return; // must be in this room
 
     const room = otRooms.get(id);
     if (room) {
@@ -109,18 +118,12 @@ export async function handleSaveDocument(socket, rawId) {
 export async function handleRenameDocument(io, socket, rawId, title) {
     const id = getValidObjectId(rawId);
     if (!id) return;
+    if (socket.currentRoom !== id) return; // must be in this room
 
     try {
         await Document.findByIdAndUpdate(id, { title });
-
-        socket.to(id).emit("document-renamed", socket.username || socket.id, title);
-
-        if (socket.currentRoom && socket.currentRoom !== id) {
-            socket.to(socket.currentRoom).emit("document-renamed", socket.username || socket.id, title);
-        }
-
-        socket.emit("document-renamed", socket.username || socket.id, title);
-
+        // Broadcast to everyone in the room (including sender via io.to)
+        io.to(id).emit("document-renamed", socket.username || socket.id, title);
     } catch (err) {
         console.error("Error renaming document:", err);
     }
@@ -131,6 +134,7 @@ export function handleSendDelta(io, socket, payload) {
     const { docId: rawDocId, delta, clientVersion } = payload || {};
     const docId = getValidObjectId(rawDocId);
     if (!docId || !delta || typeof clientVersion !== "number") return;
+    if (socket.currentRoom !== docId) return; // must be in this room
 
     const room = otRooms.get(docId);
     if (!room) return;
@@ -199,30 +203,38 @@ export function handleSendDelta(io, socket, payload) {
 }
 
 // ── Chat Message ──────────────────────────────────────────────────────────
-export function handleChatMessage(socket, rawId, username, message) {
+export function handleChatMessage(socket, rawId, message) {
     const id = getValidObjectId(rawId);
     if (!id) return;
-    socket.to(id).emit("receive-chat-message", username, message);
+    if (socket.currentRoom !== id) return; // must be in this room
+    // Use server-verified username — never trust the client-supplied value
+    socket.to(id).emit("receive-chat-message", socket.username || socket.userId, message);
 }
 
 // ── Leave Room ────────────────────────────────────────────────────────────
-export async function handleLeaveRoom(io, socket, rawId, username) {
+export async function handleLeaveRoom(io, socket, rawId) {
     const id = getValidObjectId(rawId);
     if (!id) return;
 
     console.log(`socket ${socket.id} left room ${id}`);
-    socket.to(id).emit("user-left", username || socket.id);
+    socket.to(id).emit("user-left", socket.username || socket.id);
     removeUserFromRoom(id, socket.id);
     socket.leave(id);
     socket.currentRoom = null;
     await broadcastUserLists(io, id);
-    await checkAndCleanupRoom(id);
+    socket.cleanupDone = true; // prevent duplicate cleanup on disconnect
+    try {
+        await checkAndCleanupRoom(id);
+    } catch (err) {
+        console.error(`Cleanup error for room ${id}:`, err);
+    }
 }
 
 // ── Description update via socket (real-time sync to room) ───────────────
 export async function handleUpdateDescription(io, socket, rawDocId, description) {
     const docId = getValidObjectId(rawDocId);
     if (!docId) return;
+    if (socket.currentRoom !== docId) return; // must be in this room
 
     try {
         await Document.findByIdAndUpdate(docId, { description });

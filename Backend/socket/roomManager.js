@@ -4,15 +4,17 @@ import { activeRooms, getRoomActiveUsers } from "./state.js";
 // Helper: find owner socket in a room
 export async function findOwnerSocket(roomId) {
     try {
-        const doc = await Document.findById(roomId).populate("owner", "username");
+        const doc = await Document.findById(roomId).populate("owner", "_id");
         if (!doc) return null;
-        const ownerUsername = doc.owner.username;
+        const ownerUserId = doc.owner._id.toString();
 
         const room = activeRooms.get(roomId);
         if (!room) return null;
 
-        for (const [sid, uname] of room.entries()) {
-            if (uname === ownerUsername) return { socketId: sid, username: ownerUsername };
+        for (const [sid, entry] of room.entries()) {
+            if (entry.userId === ownerUserId) {
+                return { socketId: sid, username: entry.username };
+            }
         }
         return null; // owner not currently in room
     } catch {

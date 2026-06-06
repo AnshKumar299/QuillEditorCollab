@@ -7,7 +7,7 @@ import { io } from "socket.io-client";
 import JoinRequestBanner from "../Components/JoinRequestBanner";
 import logo from "../assets/logo.png";
 
-const socket = io(import.meta.env.VITE_BACKEND_URL);
+const socket = io(import.meta.env.VITE_BACKEND_URL, { withCredentials: true });
 
 interface DocumentItem {
     _id: string;
@@ -95,7 +95,6 @@ const Dashboard = () => {
     const [joinInput, setJoinInput] = useState("");
     const [isJoining, setIsJoining] = useState(false);
     const [joiningStatus, setJoiningStatus] = useState<string | null>(null);
-    const [userId, setUserId] = useState<string | null>(null);
     const [pendingRequest, setPendingRequest] = useState<{ requesterId: string; username: string; docId?: string } | null>(null);
 
     // Share modal state
@@ -153,10 +152,6 @@ const Dashboard = () => {
                 const authRes = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/`, {}, { withCredentials: true });
                 if (authRes.data.status) {
                     setUsername(authRes.data.user);
-                    const userData = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/getData`, {}, { withCredentials: true });
-                    if (userData.data.success) {
-                        setUserId(userData.data.user._id);
-                    }
                     const docRes = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/documents/list`, { withCredentials: true });
                     if (docRes.data.status) {
                         setOwnedDocuments(docRes.data.ownedDocuments || []);
@@ -261,7 +256,7 @@ const Dashboard = () => {
             const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/documents/check/${trimmed}`);
             if (res.data.exists) {
                 setJoiningStatus("Requesting access...");
-                socket.emit("request-join", { docId: trimmed, username, userId });
+                socket.emit("request-join", { docId: trimmed, username });
             } else {
                 addToast("No document found with that ID", "error");
                 setIsJoining(false);

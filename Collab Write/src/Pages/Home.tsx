@@ -9,7 +9,7 @@ import { io } from "socket.io-client";
 import JoinRequestBanner from "../Components/JoinRequestBanner";
 import * as quillToWord from "quill-to-word";
 
-const socket = io(import.meta.env.VITE_BACKEND_URL, { autoConnect: false });
+const socket = io(import.meta.env.VITE_BACKEND_URL, { autoConnect: false, withCredentials: true });
 
 const Home = () => {
     const navigate = useNavigate();
@@ -149,27 +149,11 @@ const Home = () => {
         verifyCookie();
     }, [navigate]);
 
-    // ── Once verified + id available, fetch userId and request join ───────────
+    // ── Once verified + id available, request join ───────────────────────────
     useEffect(() => {
         if (!isVerified || !id || !username) return;
-
-        // Fetch the user's _id for socket auth
-        const fetchAndJoin = async () => {
-            try {
-                const { data } = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/getData`, {}, { withCredentials: true });
-                if (data.success && data.user) {
-                    const uId = data.user._id;
-                    socket.emit("request-join", { docId: id, username, userId: uId });
-                } else {
-                    // Fallback: join without userId (auto-approve)
-                    socket.emit("request-join", { docId: id, username, userId: null });
-                }
-            } catch {
-                socket.emit("request-join", { docId: id, username, userId: null });
-            }
-        };
-
-        fetchAndJoin();
+        // userId is now read from the JWT on the server — no need to send it
+        socket.emit("request-join", { docId: id, username });
     }, [isVerified, id, username]);
 
     if (!isVerified) {
@@ -186,7 +170,8 @@ const Home = () => {
     const handleSendMessage = (msg: string) => {
         const room = currentRoom || id;
         if (!room || !msg.trim()) return;
-        socket.emit("chat-message", room, username, msg);
+        // username is resolved server-side from the JWT — don't send it from the client
+        socket.emit("chat-message", room, msg);
         setLogs((prev) => [...prev, { type: 'message', user: username, text: msg }]);
     };
 

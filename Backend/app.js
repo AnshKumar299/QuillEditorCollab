@@ -14,7 +14,7 @@ dotenv.config();
 const app = express();
 app.use(
     cors({
-        origin: ["https://collab-write-delta.vercel.app", "http://localhost:5173"],
+        origin: [process.env.FRONTEND_URL],
         methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
         credentials: true,
     })
@@ -26,7 +26,7 @@ const server = createServer(app);
 const PORT = process.env.PORT || 3000;
 const io = new Server(server, {
     cors: {
-        origin: "*",
+        origin: process.env.FRONTEND_URL,
         methods: ["GET", "POST"],
         credentials: true,
     }

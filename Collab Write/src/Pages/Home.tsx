@@ -259,8 +259,8 @@ const Home = () => {
             <main className="flex-1 flex bg-[var(--surface)] overflow-hidden relative bg-gradient-to-br from-[var(--gradient-start)] to-[var(--gradient-end)]">
                 {/* Editor Container */}
                 <div className="flex-1 flex justify-center p-4 sm:p-8 overflow-y-auto relative">
-                    <div className="w-full max-w-5xl bg-[var(--surface-container-low)]/80 backdrop-blur-md border border-[var(--outline-variant)] rounded-2xl flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-h-full relative overflow-hidden">
-                        <Edit delta={delta} setDelta={setDelta} socket={socket} quillRef={quillRef} currentRoom={currentRoom} />
+                    <div className="w-full max-w-5xl bg-[var(--surface-container-low)]/80 backdrop-blur-md border border-[var(--outline-variant)] rounded-2xl flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-h-full relative">
+                        <Edit delta={delta} setDelta={setDelta} socket={socket} quillRef={quillRef} currentRoom={currentRoom} username={username} />
                     </div>
                 </div>
 

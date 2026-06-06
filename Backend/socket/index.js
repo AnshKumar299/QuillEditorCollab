@@ -6,7 +6,8 @@ import {
     handleSendDelta,
     handleChatMessage,
     handleLeaveRoom,
-    handleUpdateDescription
+    handleUpdateDescription,
+    handleCursorUpdate
 } from "./collaboration.js";
 import { removeUserFromRoom } from "./state.js";
 import { broadcastUserLists } from "./roomManager.js";
@@ -28,6 +29,8 @@ export function initSocket(io) {
             // Skip if leave-room already ran cleanup for this socket
             if (socket.currentRoom && !socket.cleanupDone) {
                 const roomId = socket.currentRoom;
+                // Remove cursor from all peers immediately (tab close / network drop)
+                socket.to(roomId).emit("cursor-remove", { socketId: socket.id });
                 socket.to(roomId).emit("user-left", socket.username || socket.id);
                 removeUserFromRoom(roomId, socket.id);
                 await broadcastUserLists(io, roomId);
@@ -78,6 +81,11 @@ export function initSocket(io) {
         // ── Description update via socket (real-time sync to room) ───────────────
         socket.on("update-description", async (rawDocId, description) => {
             await handleUpdateDescription(io, socket, rawDocId, description);
+        });
+
+        // ── Cursor Update (live cursors) ──────────────────────────────────────────
+        socket.on("cursor-update", (payload) => {
+            handleCursorUpdate(socket, payload);
         });
     });
 }

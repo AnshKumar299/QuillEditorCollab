@@ -53,6 +53,9 @@ export async function handleJoinRoom(io, socket, rawId, username) {
 
     addUserToRoom(id, socket.id, username, socket.userId);
     io.to(id).emit("user-joined", username || socket.id);
+    // Ask existing room members to re-send their cursor positions so the
+    // new joiner immediately sees where everyone is
+    socket.to(id).emit("cursor-sync-request");
 
     try {
         const document = await Document.findById(id)
@@ -217,6 +220,8 @@ export async function handleLeaveRoom(io, socket, rawId) {
     if (!id) return;
 
     console.log(`socket ${socket.id} left room ${id}`);
+    // Remove this user's cursor from every peer before cleaning up state
+    socket.to(id).emit("cursor-remove", { socketId: socket.id });
     socket.to(id).emit("user-left", socket.username || socket.id);
     removeUserFromRoom(id, socket.id);
     socket.leave(id);
@@ -243,4 +248,28 @@ export async function handleUpdateDescription(io, socket, rawDocId, description)
     } catch (err) {
         console.error("Error updating description:", err);
     }
+}
+
+// ── Cursor Update ─────────────────────────────────────────────────────────
+// Receives a cursor range from the client and broadcasts it to all room peers
+// with the server-verified username and deterministic color. The sender never
+// receives their own event (socket.to excludes the emitter).
+export function handleCursorUpdate(socket, payload) {
+    const { docId: rawDocId, range } = payload || {};
+    const docId = getValidObjectId(rawDocId);
+    if (!docId) return;
+    if (socket.currentRoom !== docId) return;
+
+    // range = { index, length } | null (null means editor lost focus → hide cursor)
+    if (range !== null && range !== undefined) {
+        const { index, length } = range;
+        if (typeof index !== "number" || typeof length !== "number") return;
+    }
+
+    socket.to(docId).emit("cursor-moved", {
+        socketId: socket.id,
+        username: socket.username || socket.userId,
+        color: socket.cursorColor || "#6366f1",
+        range: range ?? null,
+    });
 }

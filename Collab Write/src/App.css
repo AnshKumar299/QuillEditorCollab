@@ -110,3 +110,43 @@ body {
 @media (max-width: 640px) {
   .ql-editor { padding: 20px 16px !important; }
 }
+
+/* ── Quill live cursors ───────────────────────────────────────────────────── */
+/* Allow cursor flag labels to overflow the editor bounds vertically */
+.ql-editor {
+  overflow: visible !important;
+}
+
+/* Cursor caret — the blinking vertical bar */
+.ql-cursor-caret {
+  width: 2px !important;
+  border-radius: 1px;
+}
+
+/* Name badge that hovers above the cursor */
+.ql-cursor-flag {
+  z-index: 30 !important;
+  white-space: nowrap !important;
+  border-radius: 4px 4px 4px 0 !important;
+  padding: 2px 7px !important;
+  font-size: 11px !important;
+  font-family: var(--font-sans) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+  opacity: 1 !important;
+  pointer-events: none;
+}
+
+/* Small caret notch below the name badge */
+.ql-cursor-flag::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 5px 5px 0 0;
+  border-color: inherit transparent transparent transparent;
+}

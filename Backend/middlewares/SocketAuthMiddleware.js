@@ -2,6 +2,21 @@ import jwt from "jsonwebtoken";
 import User from "../models/UserModel.js";
 
 /**
+ * Deterministic cursor color derived from a userId string.
+ * Maps the userId's hash to a hue in HSL space — same user always
+ * gets the same color regardless of reconnections or server restarts.
+ */
+function generateCursorColor(userId) {
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+        hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+        hash |= 0; // coerce to 32-bit int
+    }
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, 70%, 55%)`;
+}
+
+/**
  * Socket.IO middleware that verifies the JWT from the request cookie.
  *
  * The client sends credentials (cookies) during the WebSocket handshake
@@ -11,7 +26,8 @@ import User from "../models/UserModel.js";
  * longer exists, we reject the connection before any event handler runs.
  *
  * On success, we attach the resolved user to the socket so every handler
- * can trust `socket.userId` and `socket.user` without re-querying the DB.
+ * can trust `socket.userId`, `socket.user`, and `socket.cursorColor`
+ * without re-querying the DB.
  */
 export async function socketAuthMiddleware(socket, next) {
     try {
@@ -40,6 +56,8 @@ export async function socketAuthMiddleware(socket, next) {
         // Attach to socket so handlers can use them without repeating auth logic
         socket.userId = user._id.toString();
         socket.user = user;
+        // Stable color — same user always gets same hue across reconnects
+        socket.cursorColor = generateCursorColor(socket.userId);
 
         next();
     } catch (err) {

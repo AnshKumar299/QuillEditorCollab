@@ -147,7 +147,8 @@ export function handleSendDelta(io, socket, payload) {
 
         // Force resync if client is too far behind and history is lost
         const oldestStoredVersion = room.operations.length > 0 ? room.operations[0].version : room.version;
-        if (clientVersion < oldestStoredVersion && clientVersion !== room.version) {
+        const resyncLimit = room.operations.length > 0 ? oldestStoredVersion - 1 : room.version;
+        if (clientVersion < resyncLimit && clientVersion !== room.version) {
             socket.emit("force-resync", {
                 content: room.content.ops,
                 version: room.version

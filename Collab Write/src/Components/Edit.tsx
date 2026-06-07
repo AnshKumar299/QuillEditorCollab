@@ -1,5 +1,6 @@
 import ReactQuill, { Quill } from "react-quill";
 import "react-quill/dist/quill.snow.css";
+// @ts-expect-error - quill-cursors does not export style types in package exports
 import "quill-cursors/css";
 import QuillCursors from "quill-cursors";
 // @ts-expect-error - quill-image-resize-module-react does not have type definitions
@@ -35,6 +36,7 @@ interface AckDeltaPayload {
 
 interface EditProps {
     delta: any;
+    setDelta: React.Dispatch<React.SetStateAction<any>>;
     socket: any;
     quillRef: React.RefObject<any>;
     currentRoom: string;
@@ -89,7 +91,7 @@ const formats = [
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
-const Edit = ({ delta, socket, quillRef, currentRoom, username }: EditProps) => {
+const Edit = ({ delta, socket, quillRef, currentRoom }: EditProps) => {
     // OT state — kept in refs to avoid stale closures in Quill event handlers
     const isApplyingRemote = useRef(false);
     const versionRef = useRef<number>(0);

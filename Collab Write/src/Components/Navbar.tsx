@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useCookies } from "react-cookie";
 import { useToast } from "../Context/ToastContext";
-import { Sun, Moon, Info, X, Download, FileText, FileImage, Copy } from "lucide-react";
+import { Sun, Moon, Info, X, Download, FileText, FileImage, Copy, ArrowLeft } from "lucide-react";
 import axios from "axios";
 import logo from "../assets/logo.png";
 
@@ -19,12 +19,13 @@ interface NavbarProps {
     setDescription?: (desc: string) => void;
     isOwner?: boolean;
     docId?: string;
+    isVertical?: boolean;
 }
 
 const Navbar = ({
     username, socket, currentRoom, setCurrentRoom,
     docTitle, setDocTitle, onDownload, onDownloadPdf,
-    description, setDescription, isOwner, docId
+    description, setDescription, isOwner, docId, isVertical
 }: NavbarProps) => {
     const navigate = useNavigate();
     const [_, __, removeCookie] = useCookies(["token"]);
@@ -99,129 +100,180 @@ const Navbar = ({
         addToast("Document ID copied to clipboard!", "success");
     };
 
-    return (
-        <>
-            <header className="h-16 flex items-center justify-between px-6 border-b border-[var(--outline-variant)] bg-[var(--surface-container-low)]/80 backdrop-blur-md shrink-0 z-20">
-                <div className="flex items-center gap-4">
-                    <Link to="/" className="flex items-center gap-2 text-lg font-bold text-[var(--primary)] tracking-tight hover:text-[var(--primary-container)] transition-colors">
-                        <img src={logo} alt="Logo" className="w-7 h-7 object-contain" />
-                        Collab Write
-                    </Link>
-                    <span className="text-[var(--outline-variant)] text-lg font-light">/</span>
-                    <input
-                        type="text"
-                        value={docTitle || "Untitled"}
-                        onChange={(e) => setDocTitle && setDocTitle(e.target.value)}
-                        onBlur={(e) => handleTitleRename(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                                handleTitleRename((e.target as HTMLInputElement).value);
-                                e.currentTarget.blur();
-                            }
-                        }}
-                        className="text-base text-[var(--on-surface)] bg-transparent border-none outline-none px-2 py-1 rounded hover:bg-white/5 focus:bg-white/5 w-32 sm:w-64 transition-colors font-medium focus:ring-1 focus:ring-[var(--secondary-container)]"
-                    />
-                </div>
-                <div className="flex items-center gap-4">
-                    {/* Room Section */}
-                    {currentRoom ? (
-                        <div className="flex items-center gap-2 bg-[var(--nav-bg)] border border-[var(--outline-variant)] px-3 py-1.5 rounded-md max-w-[260px]">
-                            <span className="text-[11px] text-[var(--outline)] font-semibold uppercase tracking-wider hidden sm:inline font-mono shrink-0">Room ID</span>
-                            <div className="flex items-center gap-2 min-w-0">
-                                <span className="text-xs font-semibold text-[var(--on-surface)] font-mono truncate" title={currentRoom}>
-                                    {currentRoom}
-                                </span>
-                                <button onClick={handleCopyRoomId} className="text-[var(--outline)] hover:text-[var(--primary)] cursor-pointer transition-colors p-1 rounded hover:bg-white/5 shrink-0" title="Copy Room ID to share">
-                                    <Copy size={12} />
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="text"
-                                placeholder="Document ID"
-                                className="text-sm bg-[var(--nav-bg)] border border-[var(--outline-variant)] outline-none rounded px-2.5 py-1.5 w-28 focus:border-[var(--secondary-container)] focus:ring-1 focus:ring-[var(--secondary-container)] transition-colors text-[var(--on-surface)] font-mono placeholder-[var(--outline)]"
-                                value={joinInput}
-                                onChange={(e) => setJoinInput(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleJoinRoom()}
-                            />
-                            <button onClick={handleJoinRoom} className="text-sm bg-[var(--primary-container)] text-[var(--on-primary-container)] px-3 py-1.5 rounded hover:bg-[var(--primary)] transition-colors font-bold">Join</button>
-                        </div>
-                    )}
-
-                    <div className="h-6 w-px bg-[var(--outline-variant)] mx-1 hidden sm:block"></div>
-
-                    {/* Download Dropdown */}
-                    {(onDownload || onDownloadPdf) && currentRoom && (
-                        <div className="relative" ref={downloadRef}>
-                            <button
-                                onClick={() => setIsDownloadOpen(o => !o)}
-                                className="text-[var(--outline)] hover:text-[var(--primary)] transition-colors p-1.5 rounded hover:bg-[var(--surface-container-high)] flex items-center gap-1"
-                                title="Download"
-                            >
-                                <Download size={18} />
-                            </button>
-                            {isDownloadOpen && (
-                                <div
-                                    className="absolute right-0 top-full mt-2 w-44 bg-[var(--surface-container-high)] border border-[var(--outline-variant)] rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.4)] overflow-hidden z-50"
-                                    onMouseLeave={() => setIsDownloadOpen(false)}
+    // ── Shared action buttons (used in both layouts) ──────────────────────────
+    const actionButtons = (
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            {/* Download Dropdown */}
+            {(onDownload || onDownloadPdf) && currentRoom && (
+                <div className="relative" ref={downloadRef}>
+                    <button
+                        onClick={() => setIsDownloadOpen(o => !o)}
+                        className="text-[var(--outline)] hover:text-[var(--primary)] transition-colors p-1.5 rounded hover:bg-[var(--surface-container-high)] flex items-center gap-1"
+                        title="Download"
+                    >
+                        <Download size={18} />
+                    </button>
+                    {isDownloadOpen && (
+                        <div
+                            className="absolute right-0 top-full mt-2 w-44 bg-[var(--surface-container-high)] border border-[var(--outline-variant)] rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.4)] overflow-hidden z-50"
+                            onMouseLeave={() => setIsDownloadOpen(false)}
+                        >
+                            {onDownload && (
+                                <button
+                                    onClick={() => { onDownload(); setIsDownloadOpen(false); }}
+                                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[var(--on-surface)] hover:bg-white/10 transition-colors text-left"
                                 >
-                                    {onDownload && (
-                                        <button
-                                            onClick={() => { onDownload(); setIsDownloadOpen(false); }}
-                                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[var(--on-surface)] hover:bg-white/10 transition-colors text-left"
-                                        >
-                                            <FileText size={15} className="text-[var(--primary)] shrink-0" />
-                                            Download as Word
-                                        </button>
-                                    )}
-                                    {onDownloadPdf && (
-                                        <button
-                                            onClick={() => { onDownloadPdf(); setIsDownloadOpen(false); }}
-                                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[var(--on-surface)] hover:bg-white/10 transition-colors text-left"
-                                        >
-                                            <FileImage size={15} className="text-red-400 shrink-0" />
-                                            Download as PDF
-                                        </button>
-                                    )}
-                                </div>
+                                    <FileText size={15} className="text-[var(--primary)] shrink-0" />
+                                    Download as Word
+                                </button>
+                            )}
+                            {onDownloadPdf && (
+                                <button
+                                    onClick={() => { onDownloadPdf(); setIsDownloadOpen(false); }}
+                                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[var(--on-surface)] hover:bg-white/10 transition-colors text-left"
+                                >
+                                    <FileImage size={15} className="text-red-400 shrink-0" />
+                                    Download as PDF
+                                </button>
                             )}
                         </div>
                     )}
-
-                    {/* Info Button */}
-                    <button onClick={() => setIsInfoOpen(true)} className="text-[var(--outline)] hover:text-[var(--primary)] transition-colors p-1.5 rounded hover:bg-[var(--surface-container-high)]" title="How to use">
-                        <Info size={18} />
-                    </button>
-
-                    {/* Theme Toggle */}
-                    <button onClick={toggleTheme} className="text-[var(--outline)] hover:text-[var(--primary)] transition-colors p-1.5 rounded hover:bg-[var(--surface-container-high)]" title="Toggle Theme">
-                        {isLightMode ? <Moon size={18} /> : <Sun size={18} />}
-                    </button>
-
-                    <div className="h-6 w-px bg-[var(--outline-variant)] mx-1 hidden sm:block"></div>
-
-                    {/* Profile & Logout */}
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full border-2 border-[var(--primary)] bg-[var(--surface-container-high)] flex items-center justify-center text-xs text-[var(--on-surface)] font-bold uppercase shadow-[0_0_5px_var(--primary)]">
-                            {username.charAt(0)}
-                        </div>
-                        <span className="text-sm font-medium text-[var(--on-surface)] hidden sm:inline">{username}</span>
-                    </div>
-                    <button
-                        onClick={() => {
-                            removeCookie("token", { path: "/" });
-                            localStorage.removeItem("isLoggedIn");
-                            navigate("/login");
-                            addToast("Logged out", "info");
-                        }}
-                        className="text-sm text-[var(--outline)] hover:text-[var(--danger)] transition-colors font-medium"
-                    >
-                        Log out
-                    </button>
                 </div>
-            </header>
+            )}
+            {/* Info */}
+            <button onClick={() => setIsInfoOpen(true)} className="text-[var(--outline)] hover:text-[var(--primary)] transition-colors p-1.5 rounded hover:bg-[var(--surface-container-high)]" title="How to use">
+                <Info size={18} />
+            </button>
+            {/* Theme */}
+            <button onClick={toggleTheme} className="text-[var(--outline)] hover:text-[var(--primary)] transition-colors p-1.5 rounded hover:bg-[var(--surface-container-high)]" title="Toggle Theme">
+                {isLightMode ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+            {/* Avatar */}
+            <div className="w-8 h-8 rounded-full border-2 border-[var(--primary)] bg-[var(--surface-container-high)] flex items-center justify-center text-xs text-[var(--on-surface)] font-bold uppercase shadow-[0_0_5px_var(--primary)] shrink-0">
+                {username.charAt(0)}
+            </div>
+            <span className="text-sm font-medium text-[var(--on-surface)] hidden sm:inline">{username}</span>
+            {/* Logout */}
+            <button
+                onClick={() => {
+                    removeCookie("token", { path: "/" });
+                    localStorage.removeItem("isLoggedIn");
+                    navigate("/login");
+                    addToast("Logged out", "info");
+                }}
+                className="text-sm text-[var(--outline)] hover:text-[var(--danger)] transition-colors font-medium hidden sm:inline"
+            >
+                Log out
+            </button>
+        </div>
+    );
+
+    // ── Room / join section ───────────────────────────────────────────────────
+    const roomSection = (
+        currentRoom ? (
+            <div className="flex items-center gap-1.5 bg-[var(--nav-bg)] border border-[var(--outline-variant)] px-2.5 py-1.5 rounded-md min-w-0">
+                <span className="text-[10px] text-[var(--outline)] font-semibold uppercase tracking-wider font-mono shrink-0 hidden sm:inline">Room</span>
+                <span className="text-xs font-semibold text-[var(--on-surface)] font-mono truncate max-w-[120px] sm:max-w-[180px]" title={currentRoom}>
+                    {currentRoom}
+                </span>
+                <button onClick={handleCopyRoomId} className="text-[var(--outline)] hover:text-[var(--primary)] cursor-pointer transition-colors p-1 rounded hover:bg-white/5 shrink-0" title="Copy Room ID">
+                    <Copy size={12} />
+                </button>
+            </div>
+        ) : (
+            <div className="flex items-center gap-1.5">
+                <input
+                    type="text"
+                    placeholder="Room ID"
+                    className="text-sm bg-[var(--nav-bg)] border border-[var(--outline-variant)] outline-none rounded px-2.5 py-1.5 w-24 sm:w-28 focus:border-[var(--secondary-container)] focus:ring-1 focus:ring-[var(--secondary-container)] transition-colors text-[var(--on-surface)] font-mono placeholder-[var(--outline)]"
+                    value={joinInput}
+                    onChange={(e) => setJoinInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleJoinRoom()}
+                />
+                <button onClick={handleJoinRoom} className="text-sm bg-[var(--primary-container)] text-[var(--on-primary-container)] px-3 py-1.5 rounded hover:bg-[var(--primary)] transition-colors font-bold">Join</button>
+            </div>
+        )
+    );
+
+    return (
+        <>
+            {/* ── VERTICAL layout: two-row header ────────────────────────────── */}
+            {isVertical ? (
+                <header className="flex flex-col border-b border-[var(--outline-variant)] bg-[var(--surface-container-low)]/80 backdrop-blur-md shrink-0 z-20">
+                    {/* Row 1: back + logo + actions */}
+                    <div className="flex items-center justify-between px-3 py-2 gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
+                            {/* Back to dashboard */}
+                            <button
+                                onClick={() => navigate("/")}
+                                aria-label="Back to dashboard"
+                                className="p-1.5 rounded text-[var(--outline)] hover:text-[var(--primary)] hover:bg-white/5 transition-colors"
+                            >
+                                <ArrowLeft size={18} />
+                            </button>
+                            <Link to="/" className="flex items-center gap-1.5 text-base font-bold text-[var(--primary)] tracking-tight">
+                                <img src={logo} alt="Logo" className="w-6 h-6 object-contain" />
+                                Collab Write
+                            </Link>
+                        </div>
+                        {actionButtons}
+                    </div>
+                    {/* Row 2: title + room */}
+                    <div className="flex items-center gap-2 px-3 pb-2">
+                        <input
+                            type="text"
+                            value={docTitle || "Untitled"}
+                            onChange={(e) => setDocTitle && setDocTitle(e.target.value)}
+                            onBlur={(e) => handleTitleRename(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    handleTitleRename((e.target as HTMLInputElement).value);
+                                    e.currentTarget.blur();
+                                }
+                            }}
+                            className="flex-1 min-w-0 text-sm text-[var(--on-surface)] bg-white/5 border border-[var(--outline-variant)] outline-none px-2.5 py-1.5 rounded-md transition-colors font-medium focus:ring-1 focus:ring-[var(--secondary-container)] focus:border-[var(--secondary-container)]"
+                        />
+                        {roomSection}
+                    </div>
+                </header>
+            ) : (
+                /* ── DESKTOP layout: single-row header ─────────────────────── */
+                <header className="h-16 flex items-center justify-between px-6 border-b border-[var(--outline-variant)] bg-[var(--surface-container-low)]/80 backdrop-blur-md shrink-0 z-20 gap-3">
+                    <div className="flex items-center gap-3 min-w-0 shrink">
+                        {/* Back to dashboard */}
+                        <button
+                            onClick={() => navigate("/")}
+                            aria-label="Back to dashboard"
+                            className="p-1.5 rounded text-[var(--outline)] hover:text-[var(--primary)] hover:bg-white/5 transition-colors shrink-0"
+                        >
+                            <ArrowLeft size={18} />
+                        </button>
+                        <Link to="/" className="flex items-center gap-2 text-lg font-bold text-[var(--primary)] tracking-tight hover:text-[var(--primary-container)] transition-colors shrink-0">
+                            <img src={logo} alt="Logo" className="w-7 h-7 object-contain" />
+                            Collab Write
+                        </Link>
+                        <span className="text-[var(--outline-variant)] text-lg font-light">/</span>
+                        <input
+                            type="text"
+                            value={docTitle || "Untitled"}
+                            onChange={(e) => setDocTitle && setDocTitle(e.target.value)}
+                            onBlur={(e) => handleTitleRename(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    handleTitleRename((e.target as HTMLInputElement).value);
+                                    e.currentTarget.blur();
+                                }
+                            }}
+                            className="text-base text-[var(--on-surface)] bg-transparent border-none outline-none px-2 py-1 rounded hover:bg-white/5 focus:bg-white/5 w-40 lg:w-64 min-w-0 transition-colors font-medium focus:ring-1 focus:ring-[var(--secondary-container)]"
+                        />
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                        {roomSection}
+                        <div className="h-6 w-px bg-[var(--outline-variant)] mx-1"></div>
+                        {actionButtons}
+                    </div>
+                </header>
+            )}
 
             {/* ── Description Bar ─────────────────────────────────────────────────── */}
             <div className="border-b border-[var(--outline-variant)] bg-[var(--surface-container-low)]/60 backdrop-blur-sm px-6 py-2 flex items-center gap-3 min-h-[40px] z-10">

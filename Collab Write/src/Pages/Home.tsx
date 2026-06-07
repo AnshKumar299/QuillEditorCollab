@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { useToast } from "../Context/ToastContext";
@@ -8,10 +8,26 @@ import LogsSidebar from "../Components/LogsSidebar.tsx";
 import { io } from "socket.io-client";
 import JoinRequestBanner from "../Components/JoinRequestBanner";
 import * as quillToWord from "quill-to-word";
+import { MessageSquare, X } from "lucide-react";
 
 const socket = io(import.meta.env.VITE_BACKEND_URL, { autoConnect: false, withCredentials: true });
 
+// Returns true when the viewport is more portrait than 4:3 (width/height < 4/3)
+function useIsVerticalScreen() {
+    const getIsVertical = () => window.innerWidth / window.innerHeight < (4 / 3);
+    const [isVertical, setIsVertical] = useState(getIsVertical);
+    useEffect(() => {
+        const handler = () => setIsVertical(getIsVertical());
+        window.addEventListener("resize", handler);
+        return () => window.removeEventListener("resize", handler);
+    }, []);
+    return isVertical;
+}
+
 const Home = () => {
+    const isVertical = useIsVerticalScreen();
+    const [isMsgOpen, setIsMsgOpen] = useState(false);
+    const closeMsgPanel = useCallback(() => setIsMsgOpen(false), []);
     const navigate = useNavigate();
     const { id } = useParams();
     const { addToast } = useToast();
@@ -254,26 +270,79 @@ const Home = () => {
                 setDescription={setDescription}
                 isOwner={isOwner}
                 docId={id || ""}
+                isVertical={isVertical}
             />
 
             <main className="flex-1 flex bg-[var(--surface)] overflow-hidden relative bg-gradient-to-br from-[var(--gradient-start)] to-[var(--gradient-end)]">
                 {/* Editor Container */}
-                <div className="flex-1 flex justify-center p-4 sm:p-8 overflow-y-auto relative">
+                <div className="flex-1 flex justify-center p-3 sm:p-6 lg:p-8 overflow-y-auto relative">
                     <div className="w-full max-w-5xl bg-[var(--surface-container-low)]/80 backdrop-blur-md border border-[var(--outline-variant)] rounded-2xl flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-h-full relative">
                         <Edit delta={delta} setDelta={setDelta} socket={socket} quillRef={quillRef} currentRoom={currentRoom} username={username} />
                     </div>
                 </div>
 
-                {/* Sidebar Container */}
-                <div className="w-80 flex flex-col z-10 hidden md:flex shrink-0">
-                    <LogsSidebar
-                        logs={logs}
-                        currentRoom={currentRoom}
-                        onSendMessage={handleSendMessage}
-                        activeUsers={activeUsers}
-                        allUsers={allUsers}
-                    />
-                </div>
+                {/* Desktop Sidebar — hidden on vertical / narrow screens */}
+                {!isVertical && (
+                    <div className="w-80 flex flex-col z-10 shrink-0">
+                        <LogsSidebar
+                            logs={logs}
+                            currentRoom={currentRoom}
+                            onSendMessage={handleSendMessage}
+                            activeUsers={activeUsers}
+                            allUsers={allUsers}
+                        />
+                    </div>
+                )}
+
+                {/* ── Vertical / Mobile: floating message FAB ─────────────────── */}
+                {isVertical && (
+                    <>
+                        {/* FAB button — plain, no glow */}
+                        <button
+                            id="msg-fab"
+                            onClick={() => setIsMsgOpen(true)}
+                            aria-label="Open messages"
+                            className="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-[var(--surface-container-high)] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] flex items-center justify-center hover:text-[var(--primary)] hover:border-[var(--primary)] active:scale-95 transition-all duration-150"
+                        >
+                            <MessageSquare size={22} strokeWidth={1.5} />
+                        </button>
+
+                        {/* Bottom-sheet overlay */}
+                        {isMsgOpen && (
+                            <div
+                                className="fixed inset-0 z-50 flex flex-col justify-end"
+                                style={{ background: "rgba(0,0,0,0.45)" }}
+                                onClick={closeMsgPanel}
+                            >
+                                {/* Sheet panel — 50% of screen height */}
+                                <div
+                                    className="w-full flex flex-col rounded-t-2xl overflow-hidden relative"
+                                    style={{ height: "50dvh", background: "var(--surface-container-low)" }}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    {/* X button — floating top-right, no bar */}
+                                    <button
+                                        id="msg-panel-close"
+                                        onClick={closeMsgPanel}
+                                        aria-label="Close messages"
+                                        className="absolute top-2 right-2 z-10 p-1.5 text-[var(--outline)] hover:text-[var(--danger)] hover:bg-white/5 rounded-full transition-colors"
+                                    >
+                                        <X size={17} />
+                                    </button>
+                                    <div className="flex-1 overflow-hidden">
+                                        <LogsSidebar
+                                            logs={logs}
+                                            currentRoom={currentRoom}
+                                            onSendMessage={handleSendMessage}
+                                            activeUsers={activeUsers}
+                                            allUsers={allUsers}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
             </main>
 
             {/* Join Request Banner */}
